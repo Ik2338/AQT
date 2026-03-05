@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><title>Produit — Admin ShopElite</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <div class="navbar-nav">
+    <a th:href="@{/admin/produits}" class="nav-link">← Produits</a>
+    <form th:action="@{/logout}" method="post" style="display:inline">
+      <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
+    </form>
+  </div>
+</nav>
+<div class="container" style="max-width:700px">
+  <div class="page-header">
+<h1 class="page-title">
+    <span th:if="${produit.id == null}">Nouveau <span>produit</span></span>
+    <span th:if="${produit.id != null}">Modifier le produit</span>
+</h1>
+  </div>
+
+  <div class="card">
+    <form th:action="${produit.id != null} ? @{/admin/produits/modifier/{id}(id=${produit.id})} : @{/admin/produits/nouveau}"
+          method="post" th:object="${produit}">
+      <div class="form-group">
+        <label class="form-label">Nom du produit *</label>
+        <input type="text" th:field="*{nom}" class="form-control" required placeholder="Ex: Smartphone Samsung Galaxy"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <textarea th:field="*{description}" class="form-control" rows="4" placeholder="Description détaillée du produit..."></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Prix (€) *</label>
+          <input type="number" th:field="*{prix}" class="form-control" required step="0.01" min="0.01" placeholder="0.00"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock *</label>
+          <input type="number" th:field="*{stock}" class="form-control" required min="0" placeholder="0"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Catégorie</label>
+        <select th:field="*{categorie}" class="form-control">
+          <option value="">— Sans catégorie —</option>
+          <option th:each="cat : ${categories}" th:value="${cat.id}" th:text="${cat.nom}"
+                  th:selected="${produit.categorie != null and produit.categorie.id == cat.id}">Cat</option>
+        </select>
+      </div>
+      <div style="display:flex;gap:1rem;margin-top:1.5rem">
+        <button type="submit" class="btn btn-primary btn-lg">
+          <span th:text="${produit.id != null} ? '✓ Enregistrer les modifications' : '+ Créer le produit'"></span>
+        </button>
+        <a th:href="@{/admin/produits}" class="btn btn-secondary btn-lg">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+<footer><span>ShopElite</span> — Projet AQL 2025/2026</footer>
+</body>
+</html>

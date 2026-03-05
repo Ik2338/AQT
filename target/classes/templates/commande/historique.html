@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8"><title>Mes Commandes — ShopElite</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <div class="navbar-nav">
+    <a th:href="@{/catalogue}" class="nav-link">Catalogue</a>
+    <a th:href="@{/panier}" class="nav-link">🛒 Panier</a>
+    <a th:href="@{/commande/historique}" class="nav-link active">Mes commandes</a>
+    <a th:href="@{/profil}" class="nav-link">Mon profil</a>
+    <span sec:authorize="hasRole('ROLE_ADMIN')"><a th:href="@{/admin}" class="nav-link" style="color:var(--or)">⚙ Admin</a></span>
+    <form th:action="@{/logout}" method="post" style="display:inline">
+      <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
+    </form>
+  </div>
+</nav>
+<div class="container">
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div class="page-header"><h1 class="page-title">Mes <span>Commandes</span></h1></div>
+
+  <div th:if="${commandes.empty}" class="empty-state">
+    <div class="icon">📦</div>
+    <h3>Aucune commande</h3>
+    <p>Vous n'avez pas encore passé de commande.</p>
+    <a th:href="@{/catalogue}" class="btn btn-primary">Commencer mes achats</a>
+  </div>
+
+  <div class="table-container" th:unless="${commandes.empty}">
+    <table>
+      <thead><tr><th>#</th><th>Date</th><th>Articles</th><th>Total</th><th>État</th><th>Action</th></tr></thead>
+      <tbody>
+        <tr th:each="commande : ${commandes}">
+          <td><strong>#<span th:text="${commande.getId()}"></span></strong></td>
+          <td th:text="${#temporals.format(commande.dateCommande, 'dd/MM/yyyy HH:mm')}"></td>
+          <td th:text="${commande.lignes.size()} + ' article(s)'"></td>
+          <td><strong th:text="${#numbers.formatDecimal(commande.montantTotal,1,'COMMA',2,'POINT')} + ' €'" style="color:var(--or)"></strong></td>
+          <td>
+            <span th:class="${commande.etat.name() == 'VALIDEE' ? 'badge badge-validee' : (commande.etat.name() == 'ANNULEE' ? 'badge badge-annulee' : 'badge badge-en-cours')}"
+                  th:text="${commande.etat}"></span>
+          </td>
+          <td><a th:href="@{/commande/{id}(id=${commande.id})}" class="btn btn-secondary btn-sm">Détail</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+<footer><span>ShopElite</span> — Projet AQL 2025/2026</footer>
+</body>
+</html>

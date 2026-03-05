@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><title>Administration — ShopElite</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <div class="navbar-nav">
+    <a th:href="@{/catalogue}" class="nav-link">Voir le site</a>
+    <a th:href="@{/admin}" class="nav-link active" style="color:var(--or)">⚙ Admin</a>
+    <form th:action="@{/logout}" method="post" style="display:inline">
+      <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
+    </form>
+  </div>
+</nav>
+<div class="container">
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div class="page-header"><h1 class="page-title">Tableau de <span>Bord</span></h1></div>
+
+  <!-- Navigation admin -->
+  <div class="admin-nav">
+    <a th:href="@{/admin}" class="active">Dashboard</a>
+    <a th:href="@{/admin/produits}">📦 Produits</a>
+    <a th:href="@{/admin/categories}">🗂 Catégories</a>
+    <a th:href="@{/admin/commandes}">📋 Commandes</a>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-number" th:text="${nbProduits}">0</div>
+      <div class="stat-label">Produits actifs</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" th:text="${nbCommandes}">0</div>
+      <div class="stat-label">Commandes totales</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" th:text="${nbCategories}">0</div>
+      <div class="stat-label">Catégories</div>
+    </div>
+  </div>
+
+  <!-- Actions rapides -->
+  <div class="card">
+    <h3 style="font-family:var(--font-title);margin-bottom:1.2rem;color:var(--blanc)">Actions rapides</h3>
+    <div style="display:flex;gap:1rem;flex-wrap:wrap">
+      <a th:href="@{/admin/produits/nouveau}" class="btn btn-primary">+ Nouveau produit</a>
+      <a th:href="@{/admin/categories}" class="btn btn-secondary">Gérer les catégories</a>
+      <a th:href="@{/admin/commandes}" class="btn btn-secondary">Voir toutes les commandes</a>
+    </div>
+  </div>
+</div>
+<footer><span>ShopElite</span> — Projet AQL 2025/2026 · Pr. S. CHANTIT</footer>
+</body>
+</html>

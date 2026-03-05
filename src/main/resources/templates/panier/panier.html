@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Panier — ShopElite</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <div class="navbar-nav">
+    <a th:href="@{/catalogue}" class="nav-link">Catalogue</a>
+    <a th:href="@{/panier}" class="nav-link active">🛒 Panier</a>
+    <a th:href="@{/commande/historique}" class="nav-link">Mes commandes</a>
+    <a th:href="@{/profil}" class="nav-link">Mon profil</a>
+    <span sec:authorize="hasRole('ROLE_ADMIN')"><a th:href="@{/admin}" class="nav-link" style="color:var(--or)">⚙ Admin</a></span>
+    <form th:action="@{/logout}" method="post" style="display:inline">
+      <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
+    </form>
+  </div>
+</nav>
+
+<div class="container">
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+  <div class="page-header">
+    <h1 class="page-title">Mon <span>Panier</span></h1>
+  </div>
+
+  <!-- Panier vide -->
+  <div th:if="${panier.lignes.empty}" class="empty-state">
+    <div class="icon">🛒</div>
+    <h3>Votre panier est vide</h3>
+    <p>Découvrez nos produits et commencez vos achats.</p>
+    <a th:href="@{/catalogue}" class="btn btn-primary">Voir le catalogue</a>
+  </div>
+
+  <!-- Panier avec articles -->
+  <div th:unless="${panier.lignes.empty}" class="panier-layout">
+    <div>
+      <div th:each="ligne : ${panier.lignes}" class="panier-item">
+        <div class="panier-item-img">
+          <span th:text="${ligne.produit.categorie != null and ligne.produit.categorie.nom == 'Electronique' ? '💻' :
+                         (ligne.produit.categorie != null and ligne.produit.categorie.nom == 'Vetements' ? '👕' :
+                         (ligne.produit.categorie != null and ligne.produit.categorie.nom == 'Livres' ? '📚' : '📦'))}">📦</span>
+        </div>
+        <div>
+          <div style="font-weight:600;color:var(--blanc);margin-bottom:0.2rem" th:text="${ligne.produit.nom}">Produit</div>
+          <div style="color:var(--gris);font-size:0.85rem;margin-bottom:0.5rem"
+               th:text="${#numbers.formatDecimal(ligne.produit.prix,1,'COMMA',2,'POINT')} + ' € / unité'"></div>
+          <form th:action="@{/panier/modifier/{id}(id=${ligne.id})}" method="post" style="display:flex;align-items:center;gap:0.5rem">
+            <input type="number" name="quantite" th:value="${ligne.quantite}" min="0" th:max="${ligne.produit.stock}"
+                   class="form-control" style="width:70px"/>
+            <button type="submit" class="btn btn-secondary btn-sm">Mettre à jour</button>
+          </form>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:1.1rem;font-weight:700;color:var(--or);margin-bottom:0.5rem"
+               th:text="${#numbers.formatDecimal(ligne.sousTotal,1,'COMMA',2,'POINT')} + ' €'"></div>
+          <form th:action="@{/panier/supprimer/{id}(id=${ligne.id})}" method="post">
+            <button type="submit" class="btn btn-danger btn-sm">✕ Retirer</button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- RÉCAPITULATIF -->
+    <div class="panier-recap">
+      <h3 style="font-family:var(--font-title);margin-bottom:1rem;color:var(--blanc)">Récapitulatif</h3>
+      <div th:each="ligne : ${panier.lignes}" class="recap-line">
+        <span th:text="${ligne.produit.nom}">Produit</span>
+        <span th:text="${ligne.quantite} + ' × ' + ${#numbers.formatDecimal(ligne.produit.prix,1,'COMMA',2,'POINT')} + '€'"></span>
+      </div>
+      <div class="recap-total">
+        <span>Total</span>
+        <span th:text="${#numbers.formatDecimal(panier.total,1,'COMMA',2,'POINT')} + ' €'"></span>
+      </div>
+      <a th:href="@{/panier/checkout}" class="btn btn-primary btn-block btn-lg" style="margin-top:1rem">
+        Commander →
+      </a>
+      <a th:href="@{/catalogue}" class="btn btn-secondary btn-block" style="margin-top:0.5rem">
+        Continuer les achats
+      </a>
+    </div>
+  </div>
+</div>
+
+<footer><span>ShopElite</span> — Projet AQL 2025/2026 · Pr. S. CHANTIT</footer>
+</body>
+</html>

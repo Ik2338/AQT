@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catalogue — ShopElite</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <div class="navbar-nav">
+    <a th:href="@{/catalogue}" class="nav-link active">Catalogue</a>
+    <span sec:authorize="isAuthenticated()">
+      <a th:href="@{/panier}" class="nav-link">🛒 Panier</a>
+      <a th:href="@{/commande/historique}" class="nav-link">Mes commandes</a>
+      <a th:href="@{/profil}" class="nav-link">Mon profil</a>
+    </span>
+    <span sec:authorize="hasRole('ROLE_ADMIN')">
+      <a th:href="@{/admin}" class="nav-link" style="color:var(--or)">⚙ Admin</a>
+    </span>
+    <span sec:authorize="isAuthenticated()">
+      <form th:action="@{/logout}" method="post" style="display:inline">
+        <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
+      </form>
+    </span>
+    <span sec:authorize="isAnonymous()">
+      <a th:href="@{/login}" class="nav-link">Connexion</a>
+      <a th:href="@{/inscription}" class="btn btn-primary btn-sm">S'inscrire</a>
+    </span>
+  </div>
+</nav>
+
+<div class="container">
+  <!-- Alerts -->
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+  <div class="page-header">
+    <h1 class="page-title">Notre <span>Catalogue</span></h1>
+  </div>
+
+  <!-- SEARCH BAR -->
+  <form th:action="@{/catalogue}" method="get" class="search-bar">
+    <input type="text" name="q" th:value="${q}" class="form-control" placeholder="Rechercher un produit..."/>
+    <input type="hidden" name="categorieId" th:value="${categorieId}"/>
+    <button type="submit" class="btn btn-primary">Rechercher</button>
+    <a th:href="@{/catalogue}" class="btn btn-secondary">Réinitialiser</a>
+  </form>
+
+  <div class="catalogue-layout">
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+      <div class="card">
+        <div class="sidebar-section">
+          <div class="sidebar-title">Catégories</div>
+          <div class="cat-filter">
+            <a th:href="@{/catalogue}" th:classappend="${categorieId == null} ? 'active' : ''" class="cat-btn">
+              Tous les produits
+            </a>
+            <a th:each="cat : ${categories}"
+               th:href="@{/catalogue(categorieId=${cat.id})}"
+               th:classappend="${categorieId == cat.id} ? 'active' : ''"
+               th:text="${cat.nom}" class="cat-btn">Categorie</a>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- PRODUCTS -->
+    <main>
+      <div th:if="${produits.empty}" class="empty-state">
+        <div class="icon">🔍</div>
+        <h3>Aucun produit trouvé</h3>
+        <p>Essayez une autre recherche ou catégorie.</p>
+        <a th:href="@{/catalogue}" class="btn btn-primary">Voir tout</a>
+      </div>
+
+      <div class="products-grid" th:unless="${produits.empty}">
+        <a th:each="p : ${produits}" th:href="@{/produit/{id}(id=${p.id})}" class="product-card">
+          <div class="product-img">
+            <span th:text="${p.categorie != null and p.categorie.nom == 'Electronique' ? '💻' :
+                           (p.categorie != null and p.categorie.nom == 'Vetements' ? '👕' :
+                           (p.categorie != null and p.categorie.nom == 'Livres' ? '📚' :
+                           (p.categorie != null and p.categorie.nom == 'Sport' ? '⚽' : '🏠')))}">📦</span>
+          </div>
+          <div class="product-body">
+            <div class="product-cat" th:text="${p.categorie != null ? p.categorie.nom : 'Divers'}">Cat</div>
+            <div class="product-name" th:text="${p.nom}">Nom</div>
+            <div class="product-desc" th:text="${p.description}">Desc</div>
+            <div class="product-footer">
+              <span class="product-price" th:text="${#numbers.formatDecimal(p.prix,1,'COMMA',2,'POINT')} + ' €'">0€</span>
+              <span th:class="${p.stock > 5} ? 'stock-badge stock-ok' : 'stock-badge stock-low'"
+                    th:text="${p.stock > 0} ? (${p.stock > 5} ? 'En stock' : p.stock + ' restants') : 'Rupture'">Stock</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </main>
+  </div>
+</div>
+
+<footer><span>ShopElite</span> — Projet AQL 2025/2026 · Pr. S. CHANTIT</footer>
+</body>
+</html>

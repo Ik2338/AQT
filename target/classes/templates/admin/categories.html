@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8"><title>Catégories — Admin ShopElite</title>
+  <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <div class="navbar-nav">
+    <a th:href="@{/catalogue}" class="nav-link">Voir le site</a>
+    <a th:href="@{/admin}" class="nav-link" style="color:var(--bordeaux)">⚙ Admin</a>
+    <form th:action="@{/logout}" method="post" style="display:inline">
+      <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
+    </form>
+  </div>
+</nav>
+
+<div class="container" style="max-width:800px">
+  <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+
+  <div class="page-header">
+    <h1 class="page-title">Gestion des <span>Catégories</span></h1>
+  </div>
+
+  <div class="admin-nav">
+    <a th:href="@{/admin}">Dashboard</a>
+    <a th:href="@{/admin/produits}">📦 Produits</a>
+    <a th:href="@{/admin/categories}" class="active">🗂 Catégories</a>
+    <a th:href="@{/admin/commandes}">📋 Commandes</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem">
+
+    <!-- Liste -->
+    <div class="card">
+      <h3 style="font-family:var(--font-title);margin-bottom:1rem;color:var(--bordeaux)">
+        Catégories existantes
+      </h3>
+      <div th:if="${categories.empty}" style="color:var(--gris)">Aucune catégorie.</div>
+      <div th:each="cat : ${categories}"
+           style="display:flex;justify-content:space-between;align-items:center;
+                  padding:0.7rem 0;border-bottom:1px solid var(--border)">
+        <span style="color:var(--texte);font-weight:500" th:text="${cat.nom}"></span>
+        <form th:action="@{/admin/categories/supprimer/{id}(id=${cat.id})}"
+              method="post" onsubmit="return confirm('Supprimer cette catégorie ?')">
+          <button type="submit" class="btn btn-danger btn-sm">✕</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Créer -->
+    <div class="card">
+      <h3 style="font-family:var(--font-title);margin-bottom:1rem;color:var(--bordeaux)">
+        Nouvelle catégorie
+      </h3>
+      <form th:action="@{/admin/categories/nouveau}" method="post">
+        <div class="form-group">
+          <label class="form-label">Nom</label>
+          <input type="text" name="nom" class="form-control"
+                 required placeholder="Ex: Informatique"/>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">+ Créer</button>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<footer><span>ShopElite</span> — Projet AQL 2025/2026</footer>
+</body>
+</html>
