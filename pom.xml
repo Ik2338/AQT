@@ -6,7 +6,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.2.0</version>
+        <version>3.3.5</version>
         <relativePath/>
     </parent>
     <groupId>com.ecommerce</groupId>
@@ -15,7 +15,7 @@
     <name>Site E-Commerce</name>
     <description>Projet AQL 2025/2026</description>
     <properties>
-        <java.version>17</java.version>
+        <java.version>23</java.version>
     </properties>
     <dependencies>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>

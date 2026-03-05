@@ -21,12 +21,18 @@ import jakarta.persistence.Table;
 public class Commande {
     public enum EtatCommande { EN_COURS, VALIDEE, ANNULEE }
 
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @ManyToOne(fetch = FetchType.LAZY) @JoinColumn(name = "client_id", nullable = false) private Utilisateur client;
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "client_id", nullable = false) 
+    private Utilisateur client;
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneCommande> lignes = new ArrayList<>();
-    @Enumerated(EnumType.STRING) @Column(nullable = false) private EtatCommande etat = EtatCommande.EN_COURS;
-    @Column(name = "date_commande", nullable = false) private LocalDateTime dateCommande = LocalDateTime.now();
+    @Enumerated(EnumType.STRING) 
+    @Column(nullable = false) 
+    private EtatCommande etat = EtatCommande.EN_COURS;
+    @Column(name = "date_commande", nullable = false)
+    private LocalDateTime dateCommande = LocalDateTime.now();
     @Column(name = "montant_total") private Double montantTotal = 0.0;
     @Column(length = 300) private String adresseLivraison;
 
