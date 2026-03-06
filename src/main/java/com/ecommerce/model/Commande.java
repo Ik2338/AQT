@@ -24,12 +24,12 @@ public class Commande {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "client_id", nullable = false) 
+    @JoinColumn(name = "client_id", nullable = false)
     private Utilisateur client;
     @OneToMany(mappedBy = "commande", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LigneCommande> lignes = new ArrayList<>();
-    @Enumerated(EnumType.STRING) 
-    @Column(nullable = false) 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private EtatCommande etat = EtatCommande.EN_COURS;
     @Column(name = "date_commande", nullable = false)
     private LocalDateTime dateCommande = LocalDateTime.now();

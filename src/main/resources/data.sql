@@ -1,8 +1,8 @@
-INSERT INTO categorie (id, nom) VALUES (1, 'Electronique');
-INSERT INTO categorie (id, nom) VALUES (2, 'Vetements');
-INSERT INTO categorie (id, nom) VALUES (3, 'Livres');
-INSERT INTO categorie (id, nom) VALUES (4, 'Sport');
-INSERT INTO categorie (id, nom) VALUES (5, 'Maison');
+INSERT INTO categorie ( nom) VALUES ( 'Electronique');
+INSERT INTO categorie ( nom) VALUES ( 'Vetements');
+INSERT INTO categorie ( nom) VALUES ( 'Livres');
+INSERT INTO categorie ( nom) VALUES ('Sport');
+INSERT INTO categorie ( nom) VALUES ( 'Maison');
 
 INSERT INTO produit (nom, description, prix, stock, actif, categorie_id) VALUES ('Smartphone Samsung Galaxy', 'Smartphone Android 128Go', 599.99, 50, TRUE, 1);
 INSERT INTO produit (nom, description, prix, stock, actif, categorie_id) VALUES ('Laptop Dell XPS 15', 'Intel i7, 16Go RAM, SSD 512Go', 1299.99, 20, TRUE, 1);

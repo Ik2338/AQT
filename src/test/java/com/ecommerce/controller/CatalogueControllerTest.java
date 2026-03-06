@@ -1,76 +1,95 @@
 package com.ecommerce.controller;
 
-import com.ecommerce.model.Produit;
-import com.ecommerce.repository.CategorieRepository;
-import com.ecommerce.service.ProduitService;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.web.servlet.MockMvc;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.util.List;
 
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.ui.ConcurrentModel;
+import org.springframework.ui.Model;
 
-@SpringBootTest
-@AutoConfigureMockMvc
+import com.ecommerce.model.Categorie;
+import com.ecommerce.model.Produit;
+import com.ecommerce.service.CategorieService;
+import com.ecommerce.service.ProduitService;
+
+/**
+ * Tests unitaires – CatalogueController
+ * @ExtendWith(MockitoExtension.class) — PAS @SpringBootTest
+ * Spring ne démarre PAS, pas de conflit de mapping
+ */
+@ExtendWith(MockitoExtension.class)
 class CatalogueControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+    @Mock private ProduitService produitService;
+    @Mock private CategorieService categorieService;
+    @InjectMocks private CatalogueController catalogueController;
 
-    @MockBean private ProduitService produitService;
-    @MockBean private CategorieRepository categorieRepo;
+    private Model model;
+    private Produit produit;
+    private List<Categorie> categories;
 
-    @Test
-    @DisplayName("GET /catalogue - affiche la liste des produits")
-    void catalogue_affiche_liste() throws Exception {
-        Produit p = new Produit();
-        p.setId(1L);
-        p.setNom("Smartphone");
-        p.setPrix(599.99);
-        p.setStock(10);
-        p.setActif(true);
-
-        when(produitService.rechercher(null, null)).thenReturn(List.of(p));
-        when(categorieRepo.findAll()).thenReturn(List.of());
-
-        mockMvc.perform(get("/catalogue"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("catalogue/liste"))
-                .andExpect(model().attributeExists("produits"));
+    @BeforeEach
+    void setUp() {
+        model = new ConcurrentModel();
+        produit = new Produit("Laptop", "Desc", 999.0, 10, null);
+        produit.setId(1L);
+        categories = List.of(new Categorie("Electronique"));
+        when(categorieService.listerToutes()).thenReturn(categories);
     }
 
     @Test
-    @DisplayName("GET /catalogue - accessible sans connexion")
-    void catalogue_accessible_sans_connexion() throws Exception {
-        when(produitService.rechercher(null, null)).thenReturn(List.of());
-        when(categorieRepo.findAll()).thenReturn(List.of());
+    @DisplayName("R1 - catalogue sans filtre retourne tous les produits actifs")
+    void R1_catalogueSansFiltre_retourneTousLesProduits() {
+        when(produitService.rechercher(null, null)).thenReturn(List.of(produit));
 
-        mockMvc.perform(get("/catalogue"))
-                .andExpect(status().isOk());
+        String vue = catalogueController.catalogue(null, null, model);
+
+        assertThat(vue).isEqualTo("catalogue/liste");
+        assertThat((List<?>) model.getAttribute("produits")).hasSize(1);
+        assertThat(model.getAttribute("categories")).isEqualTo(categories);
     }
 
     @Test
-    @DisplayName("GET /produit/{id} - affiche le détail")
-    void produit_detail_affiche() throws Exception {
-        Produit p = new Produit();
-        p.setId(1L);
-        p.setNom("Smartphone");
-        p.setPrix(599.99);
-        p.setActif(true);
+    @DisplayName("R2 - catalogue avec recherche par nom")
+    void R2_catalogueAvecRecherche_filtreParNom() {
+        when(produitService.rechercher("Laptop", null)).thenReturn(List.of(produit));
 
-        when(produitService.trouverParId(1L)).thenReturn(p);
-        when(categorieRepo.findAll()).thenReturn(List.of());
+        String vue = catalogueController.catalogue("Laptop", null, model);
 
-        mockMvc.perform(get("/produit/1"))
-                .andExpect(status().isOk())
-                .andExpect(view().name("catalogue/detail"))
-                .andExpect(model().attributeExists("produit"));
+        assertThat(vue).isEqualTo("catalogue/liste");
+        assertThat(model.getAttribute("q")).isEqualTo("Laptop");
+        verify(produitService).rechercher("Laptop", null);
+    }
+
+    @Test
+    @DisplayName("R3 - catalogue avec filtre categorie")
+    void R3_catalogueAvecCategorie_filtreParCategorie() {
+        when(produitService.rechercher(null, 1L)).thenReturn(List.of(produit));
+
+        String vue = catalogueController.catalogue(null, 1L, model);
+
+        assertThat(vue).isEqualTo("catalogue/liste");
+        assertThat(model.getAttribute("categorieId")).isEqualTo(1L);
+        verify(produitService).rechercher(null, 1L);
+    }
+
+    @Test
+    @DisplayName("R4 - detail produit retourne la vue avec le produit")
+    void R4_detailProduit_retourneVueAvecProduit() {
+        when(produitService.trouverParId(1L)).thenReturn(produit);
+
+        String vue = catalogueController.detail(1L, model);
+
+        assertThat(vue).isEqualTo("catalogue/detail");
+        assertThat(model.getAttribute("produit")).isEqualTo(produit);
     }
 }

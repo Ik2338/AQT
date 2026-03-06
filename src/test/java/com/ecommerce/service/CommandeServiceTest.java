@@ -1,13 +1,27 @@
 package com.ecommerce.service;
 
-import com.ecommerce.exception.StockInsuffisantException;
-import com.ecommerce.model.*;
-import com.ecommerce.model.Commande.EtatCommande;
-import com.ecommerce.repository.*;
-import org.junit.jupiter.api.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import com.ecommerce.exception.StockInsuffisantException;
+import com.ecommerce.model.Commande;
+import com.ecommerce.model.Commande.EtatCommande;
+import com.ecommerce.model.LignePanier;
+import com.ecommerce.model.Panier;
+import com.ecommerce.model.Produit;
+import com.ecommerce.model.Utilisateur;
+import com.ecommerce.repository.CommandeRepository;
+import com.ecommerce.repository.ProduitRepository;
 
 class CommandeServiceTest {
 
