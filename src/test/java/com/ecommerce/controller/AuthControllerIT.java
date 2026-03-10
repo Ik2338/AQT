@@ -115,7 +115,8 @@ class AuthControllerIT extends BaseIT {
                         .param("username", "inconnu@test.com")
                         .param("password", "mauvaismdp"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login?error"));
+                .andExpect(redirectedUrl("/login?error"));
+
     }
 
     // R8 – Accès /panier sans authentification → redirect /login

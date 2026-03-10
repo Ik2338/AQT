@@ -1,6 +1,7 @@
 package com.ecommerce.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -22,6 +23,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.model.Categorie;
 import com.ecommerce.repository.CategorieRepository;
+import com.ecommerce.repository.ProduitRepository;
 
 /**
  * Tests unitaires – CategorieService
@@ -39,6 +41,7 @@ class CategorieServiceTest {
 
     @Mock private CategorieRepository categorieRepo;
     @InjectMocks private CategorieService categorieService;
+    @Mock private ProduitRepository produitRepo; 
 
     private Categorie categorie;
 
@@ -108,18 +111,17 @@ class CategorieServiceTest {
         verify(categorieRepo, never()).save(any());
     }
 
-    // R6 – supprimer supprime la categorie existante
     @Test
     @DisplayName("R6 - supprimer supprime la categorie existante")
     void R6_supprimer_supprimeCategorie() {
         when(categorieRepo.existsById(1L)).thenReturn(true);
+        when(produitRepo.findByCategorieId(1L)).thenReturn(List.of()); // ← AJOUTER
         doNothing().when(categorieRepo).deleteById(1L);
 
         categorieService.supprimer(1L);
 
         verify(categorieRepo).deleteById(1L);
     }
-
     // R7 – supprimer leve exception si categorie introuvable
     @Test
     @DisplayName("R7 - supprimer leve ResourceNotFoundException si introuvable")
