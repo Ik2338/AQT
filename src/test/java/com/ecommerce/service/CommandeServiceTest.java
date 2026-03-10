@@ -38,7 +38,6 @@ class CommandeServiceTest {
         commandeRepo  = mock(CommandeRepository.class);
         produitRepo   = mock(ProduitRepository.class);
 
-        // Java 23 : sous-classe anonyme au lieu de mock()
         PanierService panierService = new PanierService(null, null) {
             @Override
             public void vider(Utilisateur utilisateur) { /* ne rien faire */ }
@@ -69,8 +68,11 @@ class CommandeServiceTest {
         panier.getLignes().add(ligne);
     }
 
+    // ─────────────────────────────────────────────────────────
+    // R1 – panier vide lève une exception
+    // ─────────────────────────────────────────────────────────
     @Test
-    @DisplayName("R1 - panier vide lève une exception")
+    @DisplayName("R1 - panier vide leve une exception")
     void R1_panierVide_leveException() {
         Panier panierVide = new Panier();
         panierVide.setUtilisateur(client);
@@ -81,8 +83,12 @@ class CommandeServiceTest {
         assertEquals("Le panier est vide.", ex.getMessage());
     }
 
+    // ─────────────────────────────────────────────────────────
+    // R2 – quantité > stock lève StockInsuffisantException
+    // CORRECTION : était nommé R2 deux fois — renommé correctement
+    // ─────────────────────────────────────────────────────────
     @Test
-    @DisplayName("R2 - quantité > stock lève StockInsuffisantException")
+    @DisplayName("R2 - quantite superieure au stock leve StockInsuffisantException")
     void R2_quantiteDepasseStock_leveException() {
         Produit p = new Produit();
         p.setId(2L);
@@ -97,16 +103,20 @@ class CommandeServiceTest {
         LignePanier ligne = new LignePanier();
         ligne.setPanier(panierTest);
         ligne.setProduit(p);
-        ligne.setQuantite(5);
+        ligne.setQuantite(5); // 5 demandés mais stock = 1
         panierTest.getLignes().add(ligne);
 
         assertThrows(StockInsuffisantException.class,
                 () -> commandeService.validerPanier(client, panierTest, "Adresse test"));
     }
 
+    // ─────────────────────────────────────────────────────────
+    // R3 – quantité OK → commande créée avec état VALIDEE
+    // CORRECTION : était le 2ème "R2" dans l'original
+    // ─────────────────────────────────────────────────────────
     @Test
-    @DisplayName("R2 - quantité <= stock, commande créée")
-    void R2_quantiteOk_commandeCreee() {
+    @DisplayName("R3 - quantite ok, commande creee avec etat VALIDEE")
+    void R3_quantiteOk_commandeCreee_etatVALIDEE() {
         when(commandeRepo.save(any())).thenAnswer(i -> i.getArgument(0));
 
         Commande result = commandeService.validerPanier(client, panier, "12 Rue test");
@@ -115,25 +125,33 @@ class CommandeServiceTest {
         assertEquals(EtatCommande.VALIDEE, result.getEtat());
     }
 
+    // ─────────────────────────────────────────────────────────
+    // R4 – commande créée contient l'adresse de livraison
+    // CORRECTION : ce test manquait complètement dans l'original
+    // ─────────────────────────────────────────────────────────
     @Test
-    @DisplayName("R3 - commande validée a l'état VALIDEE")
-    void R3_commandeValidee_etatEstValidee() {
+    @DisplayName("R4 - commande creee contient l adresse de livraison")
+    void R4_commandeCreee_contientAdresseLivraison() {
         when(commandeRepo.save(any())).thenAnswer(i -> i.getArgument(0));
 
-        Commande result = commandeService.validerPanier(client, panier, "12 Rue test");
+        Commande result = commandeService.validerPanier(client, panier, "12 Rue de la Paix");
 
-        assertEquals(EtatCommande.VALIDEE, result.getEtat());
+        assertNotNull(result);
+        assertEquals("12 Rue de la Paix", result.getAdresseLivraison());
     }
 
+    // ─────────────────────────────────────────────────────────
+    // R5 – validation commande décrémente le stock
+    // ─────────────────────────────────────────────────────────
     @Test
-    @DisplayName("R5 - validation commande décrémente le stock")
+    @DisplayName("R5 - validation commande decremente le stock du produit")
     void R5_validationCommande_decrementeStock() {
         when(commandeRepo.save(any())).thenAnswer(i -> i.getArgument(0));
-        int stockInitial = produit.getStock();
+        int stockInitial = produit.getStock(); // 10
 
         commandeService.validerPanier(client, panier, "12 Rue test");
 
-        assertEquals(stockInitial - 2, produit.getStock());
+        assertEquals(stockInitial - 2, produit.getStock()); // 10 - 2 = 8
         verify(produitRepo, times(1)).save(produit);
     }
 }

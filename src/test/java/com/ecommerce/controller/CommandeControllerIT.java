@@ -1,5 +1,7 @@
 package com.ecommerce.controller;
 
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -17,16 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
-/**
- * Tests d'intégration – CommandeController + flux panier → commande
- *
- * R1 – GET /commande/historique sans auth     → redirect /login
- * R2 – GET /commande/historique avec CLIENT   → 200 + vue historique
- * R3 – POST /panier/valider panier vide       → redirect /panier/checkout avec erreur
- * R4 – POST /panier/valider panier non vide   → redirect /commande/{id} (flux complet)
- * R5 – GET /commande/{id} avec CLIENT         → 200 + vue detail
- * R6 – GET /commande/historique avec ADMIN seul → 403
- */
 class CommandeControllerIT extends BaseIT {
 
     @Autowired MockMvc mockMvc;
@@ -51,7 +43,7 @@ class CommandeControllerIT extends BaseIT {
                 .andExpect(model().attributeExists("commandes"));
     }
 
-    // R3 – POST /panier/valider panier vide → redirect /panier/checkout avec erreur
+    // R3 – POST /panier/valider panier vide → redirect /panier/checkout
     @Test
     @DisplayName("R3 - POST /panier/valider panier vide redirige vers checkout avec erreur")
     void R3_validerPanierVide_redirectCheckoutAvecErreur() throws Exception {
@@ -69,6 +61,7 @@ class CommandeControllerIT extends BaseIT {
     @DisplayName("R4 - Flux complet : ajout produit + validation panier cree une commande")
     void R4_fluxComplet_ajoutEtValidation_creerCommande() throws Exception {
         // Étape 1 : ajouter un produit au panier
+        // produitId=1 = Smartphone Samsung (dans data.sql de test)
         mockMvc.perform(post("/panier/ajouter")
                         .with(user("jean.dupont@email.com").roles("CLIENT"))
                         .with(csrf())
@@ -86,11 +79,14 @@ class CommandeControllerIT extends BaseIT {
                 .andExpect(redirectedUrlPattern("/commande/*"));
     }
 
-    // R5 – GET /commande/{id} avec CLIENT → 200 (après création commande)
+    // R5 – GET /commande/{id} avec CLIENT → 200
+    // CORRECTION : le test original avait un "if" sans assertion de sécurité.
+    // Si redirectUrl était null, le test passait sans rien vérifier !
+    // Ajout de assertNotNull + assertTrue avant d'utiliser l'URL.
     @Test
     @DisplayName("R5 - GET /commande/{id} retourne 200 et vue detail")
     void R5_detailCommande_retourne200() throws Exception {
-        // Créer une commande via le flux
+        // Étape 1 : créer une commande via le flux
         mockMvc.perform(post("/panier/ajouter")
                         .with(user("jean.dupont@email.com").roles("CLIENT"))
                         .with(csrf())
@@ -103,15 +99,19 @@ class CommandeControllerIT extends BaseIT {
                         .param("adresse", "12 Rue Test"))
                 .andReturn();
 
-        // Extraire l'URL de redirect ex: /commande/1
+        // CORRECTION : on vérifie que la redirection existe vraiment
+        // avant de l'utiliser — sinon le test passait sans rien vérifier !
         String redirectUrl = result.getResponse().getRedirectedUrl();
-        if (redirectUrl != null && redirectUrl.startsWith("/commande/")) {
-            mockMvc.perform(get(redirectUrl)
-                            .with(user("jean.dupont@email.com").roles("CLIENT")))
-                    .andExpect(status().isOk())
-                    .andExpect(view().name("commande/detail"))
-                    .andExpect(model().attributeExists("commande"));
-        }
+        assertNotNull(redirectUrl, "La commande doit creer une redirection vers /commande/{id}");
+        assertTrue(redirectUrl.startsWith("/commande/"),
+                "L URL doit commencer par /commande/ mais était : " + redirectUrl);
+
+        // Étape 2 : accéder au détail de la commande créée
+        mockMvc.perform(get(redirectUrl)
+                        .with(user("jean.dupont@email.com").roles("CLIENT")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("commande/detail"))
+                .andExpect(model().attributeExists("commande"));
     }
 
     // R6 – GET /commande/historique avec ADMIN seul → 403
