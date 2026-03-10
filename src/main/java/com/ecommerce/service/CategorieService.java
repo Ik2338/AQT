@@ -7,15 +7,19 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.model.Categorie;
+import com.ecommerce.model.Produit;
 import com.ecommerce.repository.CategorieRepository;
+import com.ecommerce.repository.ProduitRepository;
 
 @Service @Transactional
 public class CategorieService {
 
     private final CategorieRepository categorieRepo;
+    private final ProduitRepository produitRepo;
 
-    public CategorieService(CategorieRepository categorieRepo) {
+    public CategorieService(CategorieRepository categorieRepo, ProduitRepository produitRepo) {
         this.categorieRepo = categorieRepo;
+        this.produitRepo = produitRepo;
     }
 
     @Transactional(readOnly = true)
@@ -41,6 +45,12 @@ public class CategorieService {
     public void supprimer(Long id) {
         if (!categorieRepo.existsById(id)) {
             throw new ResourceNotFoundException("Categorie", id);
+        }
+        // Détacher les produits liés avant suppression
+        List<Produit> produits = produitRepo.findByCategorieId(id);
+        for (Produit p : produits) {
+            p.setCategorie(null);
+            produitRepo.save(p);
         }
         categorieRepo.deleteById(id);
     }

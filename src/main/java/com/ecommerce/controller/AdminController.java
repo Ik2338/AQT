@@ -1,20 +1,16 @@
 package com.ecommerce.controller;
 
+import com.ecommerce.model.*;
+import com.ecommerce.model.Commande.EtatCommande;
+import com.ecommerce.repository.CategorieRepository;
+import com.ecommerce.repository.ProduitRepository;
+import com.ecommerce.service.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import com.ecommerce.model.Categorie;
-import com.ecommerce.model.Commande.EtatCommande;
-import com.ecommerce.model.Produit;
-import com.ecommerce.service.CategorieService;
-import com.ecommerce.service.CommandeService;
-import com.ecommerce.service.ProduitService;
+import java.util.List;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/admin")
@@ -22,19 +18,21 @@ public class AdminController {
 
     private final ProduitService produitService;
     private final CommandeService commandeService;
-    private final CategorieService categorieService; // ← Service, pas Repository
+    private final CategorieRepository categorieRepo;
+    private final ProduitRepository produitRepository;
 
-    public AdminController(ProduitService p, CommandeService c, CategorieService cs) {
+    public AdminController(ProduitService p, CommandeService c, CategorieRepository cr, ProduitRepository pr) {
         this.produitService = p;
         this.commandeService = c;
-        this.categorieService = cs;
+        this.categorieRepo = cr;
+        this.produitRepository = pr;
     }
 
     @GetMapping({"", "/"})
     public String dashboard(Model model) {
         model.addAttribute("nbProduits", produitService.listerTous().size());
         model.addAttribute("nbCommandes", commandeService.toutesLesCommandes().size());
-        model.addAttribute("nbCategories", categorieService.listerToutes().size());
+        model.addAttribute("nbCategories", categorieRepo.findAll().size());
         return "admin/dashboard";
     }
 
@@ -48,7 +46,7 @@ public class AdminController {
     @GetMapping("/produits/nouveau")
     public String nouveauProduitForm(Model model) {
         model.addAttribute("produit", new Produit());
-        model.addAttribute("categories", categorieService.listerToutes());
+        model.addAttribute("categories", categorieRepo.findAll());
         return "admin/produits/formulaire";
     }
 
@@ -67,9 +65,7 @@ public class AdminController {
         p.setStock(stock);
         p.setActif(true);
         if (categorieId != null) {
-            try {
-                p.setCategorie(categorieService.trouverParId(categorieId));
-            } catch (Exception ignored) {}
+            categorieRepo.findById(categorieId).ifPresent(p::setCategorie);
         }
         produitService.creer(p);
         ra.addFlashAttribute("success", "Produit créé avec succès.");
@@ -79,7 +75,7 @@ public class AdminController {
     @GetMapping("/produits/modifier/{id}")
     public String modifierProduitForm(@PathVariable Long id, Model model) {
         model.addAttribute("produit", produitService.trouverParId(id));
-        model.addAttribute("categories", categorieService.listerToutes());
+        model.addAttribute("categories", categorieRepo.findAll());
         return "admin/produits/formulaire";
     }
 
@@ -98,9 +94,7 @@ public class AdminController {
         p.setPrix(prix);
         p.setStock(stock);
         if (categorieId != null) {
-            try {
-                p.setCategorie(categorieService.trouverParId(categorieId));
-            } catch (Exception ignored) {}
+            categorieRepo.findById(categorieId).ifPresent(p::setCategorie);
         } else {
             p.setCategorie(null);
         }
@@ -128,7 +122,7 @@ public class AdminController {
     // ─── CATEGORIES ─────────────────────────────────────────
     @GetMapping("/categories")
     public String categories(Model model) {
-        model.addAttribute("categories", categorieService.listerToutes());
+        model.addAttribute("categories", categorieRepo.findAll());
         model.addAttribute("nouvelleCategorie", new Categorie());
         return "admin/categories";
     }
@@ -136,7 +130,9 @@ public class AdminController {
     @PostMapping("/categories/nouveau")
     public String creerCategorie(@RequestParam String nom, RedirectAttributes ra) {
         if (nom != null && !nom.isBlank()) {
-            categorieService.creer(nom);
+            Categorie cat = new Categorie();
+            cat.setNom(nom.trim());
+            categorieRepo.save(cat);
             ra.addFlashAttribute("success", "Catégorie créée.");
         }
         return "redirect:/admin/categories";
@@ -144,7 +140,13 @@ public class AdminController {
 
     @PostMapping("/categories/supprimer/{id}")
     public String supprimerCategorie(@PathVariable Long id, RedirectAttributes ra) {
-        categorieService.supprimer(id);
+        // Détacher les produits liés avant de supprimer la catégorie
+        List<Produit> produits = produitRepository.findByCategorieId(id);
+        for (Produit p : produits) {
+            p.setCategorie(null);
+            produitRepository.save(p);
+        }
+        categorieRepo.deleteById(id);
         ra.addFlashAttribute("success", "Catégorie supprimée.");
         return "redirect:/admin/categories";
     }

@@ -1,4 +1,5 @@
 package com.ecommerce.model;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,24 +17,67 @@ import jakarta.persistence.Table;
 /**
  * Panier de l'utilisateur (persistant en session via BDD).
  */
-@Entity @Table(name = "panier")
+@Entity
+@Table(name = "panier")
 public class Panier {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
-    @OneToOne(fetch = FetchType.LAZY) @JoinColumn(name = "utilisateur_id", unique = true) private Utilisateur utilisateur;
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "utilisateur_id", unique = true)
+    private Utilisateur utilisateur;
+
     @OneToMany(mappedBy = "panier", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LignePanier> lignes = new ArrayList<>();
 
-    public Panier() {}
-    public Panier(Utilisateur utilisateur) { this.utilisateur = utilisateur; }
+    // Constructeur vide
+    public Panier() {
+    }
 
+    // Constructeur avec utilisateur
+    public Panier(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
+    }
+
+    // Calcul du total du panier
     public Double getTotal() {
-        return lignes.stream().mapToDouble(l -> l.getProduit().getPrix() * l.getQuantite()).sum();
-    }
-    public int getNombreArticles() {
-        return lignes.stream().mapToInt(LignePanier::getQuantite).sum();
+        return lignes.stream()
+                .mapToDouble(l -> l.getProduit().getPrix() * l.getQuantite())
+                .sum();
     }
 
-    public Long getId() { return id; } public void setId(Long id) { this.id = id; }
-    public Utilisateur getUtilisateur() { return utilisateur; } public void setUtilisateur(Utilisateur u) { this.utilisateur = u; }
-    public List<LignePanier> getLignes() { return lignes; } public void setLignes(List<LignePanier> l) { this.lignes = l; }
+    // Nombre total d'articles
+    public int getNombreArticles() {
+        return lignes.stream()
+                .mapToInt(LignePanier::getQuantite)
+                .sum();
+    }
+
+    // Getters et Setters
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public Utilisateur getUtilisateur() {
+        return utilisateur;
+    }
+
+    public void setUtilisateur(Utilisateur utilisateur) {
+        this.utilisateur = utilisateur;
+    }
+
+    public List<LignePanier> getLignes() {
+        return lignes;
+    }
+
+    public void setLignes(List<LignePanier> lignes) {
+        this.lignes = lignes;
+    }
 }

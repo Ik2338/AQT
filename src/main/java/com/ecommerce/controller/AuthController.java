@@ -25,7 +25,8 @@ public class AuthController {
 
     @GetMapping("/inscription")
     public String inscriptionForm(Model model) {
-        model.addAttribute("utilisateur", new Utilisateur()); return "auth/inscription";
+        model.addAttribute("utilisateur", new Utilisateur());
+        return "auth/inscription";
     }
 
     @PostMapping("/inscription")

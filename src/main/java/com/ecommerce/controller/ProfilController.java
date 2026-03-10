@@ -10,7 +10,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.ecommerce.service.UtilisateurService;
 
-@Controller @RequestMapping("/profil")
+@Controller
+@RequestMapping("/profil")
 public class ProfilController {
     private final UtilisateurService utilisateurService;
     public ProfilController(UtilisateurService u) { this.utilisateurService = u; }
