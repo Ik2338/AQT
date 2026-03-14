@@ -2,15 +2,12 @@ package com.ecommerce.controller;
 
 import com.ecommerce.model.*;
 import com.ecommerce.model.Commande.EtatCommande;
-import com.ecommerce.repository.CategorieRepository;
-import com.ecommerce.repository.ProduitRepository;
 import com.ecommerce.service.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.util.List;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
 @RequestMapping("/admin")
@@ -18,25 +15,24 @@ public class AdminController {
 
     private final ProduitService produitService;
     private final CommandeService commandeService;
-    private final CategorieRepository categorieRepo;
-    private final ProduitRepository produitRepository;
+    private final CategorieService categorieService;
 
-    public AdminController(ProduitService p, CommandeService c, CategorieRepository cr, ProduitRepository pr) {
+    public AdminController(ProduitService p, CommandeService c, CategorieService cs) {
         this.produitService = p;
         this.commandeService = c;
-        this.categorieRepo = cr;
-        this.produitRepository = pr;
+        this.categorieService = cs;
     }
 
     @GetMapping({"", "/"})
     public String dashboard(Model model) {
         model.addAttribute("nbProduits", produitService.listerTous().size());
         model.addAttribute("nbCommandes", commandeService.toutesLesCommandes().size());
-        model.addAttribute("nbCategories", categorieRepo.findAll().size());
+        model.addAttribute("nbCategories", categorieService.listerToutes().size());
         return "admin/dashboard";
     }
 
     // ─── PRODUITS ───────────────────────────────────────────
+
     @GetMapping("/produits")
     public String produits(Model model) {
         model.addAttribute("produits", produitService.listerTous());
@@ -46,7 +42,7 @@ public class AdminController {
     @GetMapping("/produits/nouveau")
     public String nouveauProduitForm(Model model) {
         model.addAttribute("produit", new Produit());
-        model.addAttribute("categories", categorieRepo.findAll());
+        model.addAttribute("categories", categorieService.listerToutes());
         return "admin/produits/formulaire";
     }
 
@@ -56,6 +52,7 @@ public class AdminController {
             @RequestParam(required = false) String description,
             @RequestParam Double prix,
             @RequestParam Integer stock,
+            @RequestParam(required = false) String imageUrl,      // ← AJOUT
             @RequestParam(required = false) Long categorieId,
             RedirectAttributes ra) {
         Produit p = new Produit();
@@ -64,8 +61,10 @@ public class AdminController {
         p.setPrix(prix);
         p.setStock(stock);
         p.setActif(true);
+        p.setImageUrl(imageUrl);                                   // ← AJOUT
         if (categorieId != null) {
-            categorieRepo.findById(categorieId).ifPresent(p::setCategorie);
+            try { p.setCategorie(categorieService.trouverParId(categorieId)); }
+            catch (Exception ignored) {}
         }
         produitService.creer(p);
         ra.addFlashAttribute("success", "Produit créé avec succès.");
@@ -75,7 +74,7 @@ public class AdminController {
     @GetMapping("/produits/modifier/{id}")
     public String modifierProduitForm(@PathVariable Long id, Model model) {
         model.addAttribute("produit", produitService.trouverParId(id));
-        model.addAttribute("categories", categorieRepo.findAll());
+        model.addAttribute("categories", categorieService.listerToutes());
         return "admin/produits/formulaire";
     }
 
@@ -86,6 +85,7 @@ public class AdminController {
             @RequestParam(required = false) String description,
             @RequestParam Double prix,
             @RequestParam Integer stock,
+            @RequestParam(required = false) String imageUrl,      // ← AJOUT
             @RequestParam(required = false) Long categorieId,
             RedirectAttributes ra) {
         Produit p = produitService.trouverParId(id);
@@ -93,8 +93,10 @@ public class AdminController {
         p.setDescription(description);
         p.setPrix(prix);
         p.setStock(stock);
+        p.setImageUrl(imageUrl);                                   // ← AJOUT
         if (categorieId != null) {
-            categorieRepo.findById(categorieId).ifPresent(p::setCategorie);
+            try { p.setCategorie(categorieService.trouverParId(categorieId)); }
+            catch (Exception ignored) {}
         } else {
             p.setCategorie(null);
         }
@@ -120,9 +122,10 @@ public class AdminController {
     }
 
     // ─── CATEGORIES ─────────────────────────────────────────
+
     @GetMapping("/categories")
     public String categories(Model model) {
-        model.addAttribute("categories", categorieRepo.findAll());
+        model.addAttribute("categories", categorieService.listerToutes());
         model.addAttribute("nouvelleCategorie", new Categorie());
         return "admin/categories";
     }
@@ -130,9 +133,7 @@ public class AdminController {
     @PostMapping("/categories/nouveau")
     public String creerCategorie(@RequestParam String nom, RedirectAttributes ra) {
         if (nom != null && !nom.isBlank()) {
-            Categorie cat = new Categorie();
-            cat.setNom(nom.trim());
-            categorieRepo.save(cat);
+            categorieService.creer(nom);
             ra.addFlashAttribute("success", "Catégorie créée.");
         }
         return "redirect:/admin/categories";
@@ -140,18 +141,13 @@ public class AdminController {
 
     @PostMapping("/categories/supprimer/{id}")
     public String supprimerCategorie(@PathVariable Long id, RedirectAttributes ra) {
-        // Détacher les produits liés avant de supprimer la catégorie
-        List<Produit> produits = produitRepository.findByCategorieId(id);
-        for (Produit p : produits) {
-            p.setCategorie(null);
-            produitRepository.save(p);
-        }
-        categorieRepo.deleteById(id);
+        categorieService.supprimer(id);
         ra.addFlashAttribute("success", "Catégorie supprimée.");
         return "redirect:/admin/categories";
     }
 
     // ─── COMMANDES ──────────────────────────────────────────
+
     @GetMapping("/commandes")
     public String commandes(Model model) {
         model.addAttribute("commandes", commandeService.toutesLesCommandes());

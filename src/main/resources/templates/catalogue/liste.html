@@ -55,9 +55,9 @@
         <div class="sidebar-section">
           <div class="sidebar-title">Catégories</div>
           <div class="cat-filter">
-            <a th:href="@{/catalogue}" th:classappend="${categorieId == null} ? 'active' : ''" class="cat-btn">
-              Tous les produits
-            </a>
+            <a th:href="@{/catalogue}"
+               th:classappend="${categorieId == null} ? 'active' : ''"
+               class="cat-btn">Tous les produits</a>
             <a th:each="cat : ${categories}"
                th:href="@{/catalogue(categorieId=${cat.id})}"
                th:classappend="${categorieId == cat.id} ? 'active' : ''"
@@ -78,18 +78,27 @@
 
       <div class="products-grid" th:unless="${produits.empty}">
         <a th:each="p : ${produits}" th:href="@{/produit/{id}(id=${p.id})}" class="product-card">
+
+          <!-- IMAGE : vraie photo si disponible, sinon emoji -->
           <div class="product-img">
-            <span th:text="${p.categorie != null and p.categorie.nom == 'Electronique' ? '💻' :
-                           (p.categorie != null and p.categorie.nom == 'Vetements' ? '👕' :
-                           (p.categorie != null and p.categorie.nom == 'Livres' ? '📚' :
-                           (p.categorie != null and p.categorie.nom == 'Sport' ? '⚽' : '🏠')))}">📦</span>
+            <img th:if="${p.imageUrl != null and !p.imageUrl.isEmpty()}"
+                 th:src="${p.imageUrl}"
+                 th:alt="${p.nom}"
+                 style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"/>
+            <span th:unless="${p.imageUrl != null and !p.imageUrl.isEmpty()}"
+                  th:text="${p.categorie != null and p.categorie.nom == 'Electronique' ? '💻' :
+                             (p.categorie != null and p.categorie.nom == 'Vetements' ? '👕' :
+                             (p.categorie != null and p.categorie.nom == 'Livres' ? '📚' :
+                             (p.categorie != null and p.categorie.nom == 'Sport' ? '⚽' : '🏠')))}">📦</span>
           </div>
+
           <div class="product-body">
             <div class="product-cat" th:text="${p.categorie != null ? p.categorie.nom : 'Divers'}">Cat</div>
             <div class="product-name" th:text="${p.nom}">Nom</div>
             <div class="product-desc" th:text="${p.description}">Desc</div>
             <div class="product-footer">
-              <span class="product-price" th:text="${#numbers.formatDecimal(p.prix,1,'COMMA',2,'POINT')} + ' €'">0€</span>
+              <span class="product-price"
+                    th:text="${#numbers.formatDecimal(p.prix,1,'COMMA',2,'POINT')} + ' €'">0€</span>
               <span th:class="${p.stock > 5} ? 'stock-badge stock-ok' : 'stock-badge stock-low'"
                     th:text="${p.stock > 0} ? (${p.stock > 5} ? 'En stock' : p.stock + ' restants') : 'Rupture'">Stock</span>
             </div>

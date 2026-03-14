@@ -9,7 +9,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -43,15 +42,23 @@ public class Produit {
     @Column(nullable = false)
     private boolean actif = true;
 
+    // ─── IMAGE ────────────────────────────────────────────────────────────────
+    // Stocke le chemin relatif vers l'image du produit
+    // Exemple : "/images/produits/smartphone.jpg"
+    // Si null → Thymeleaf affiche l'image par défaut "/images/produits/default.jpg"
+    @Column(name = "image_url")
+    private String imageUrl;
+    // ──────────────────────────────────────────────────────────────────────────
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id")
     private Categorie categorie;
 
-    // Constructeur vide
+    // ─── Constructeur vide ────────────────────────────────────────────────────
     public Produit() {
     }
 
-    // Constructeur avec paramètres
+    // ─── Constructeur avec paramètres ─────────────────────────────────────────
     public Produit(String nom, String description, Double prix, Integer stock, Categorie categorie) {
         this.nom = nom;
         this.description = description;
@@ -59,9 +66,10 @@ public class Produit {
         this.stock = stock;
         this.categorie = categorie;
         this.actif = true;
+        this.imageUrl = null; // pas d'image par défaut
     }
 
-    // Getters et Setters
+    // ─── Getters et Setters ───────────────────────────────────────────────────
 
     public Long getId() {
         return id;
@@ -109,6 +117,14 @@ public class Produit {
 
     public void setActif(boolean actif) {
         this.actif = actif;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 
     public Categorie getCategorie() {

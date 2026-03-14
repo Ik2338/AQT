@@ -39,32 +39,45 @@
   </div>
 
   <div class="detail-layout">
+
+    <!-- IMAGE : vraie photo si disponible, sinon emoji -->
     <div class="detail-img">
-      <span th:text="${produit.categorie != null and produit.categorie.nom == 'Electronique' ? '💻' :
-                     (produit.categorie != null and produit.categorie.nom == 'Vetements' ? '👕' :
-                     (produit.categorie != null and produit.categorie.nom == 'Livres' ? '📚' :
-                     (produit.categorie != null and produit.categorie.nom == 'Sport' ? '⚽' : '🏠')))}">📦</span>
+      <img th:if="${produit.imageUrl != null and !produit.imageUrl.isEmpty()}"
+           th:src="${produit.imageUrl}"
+           th:alt="${produit.nom}"
+           style="width:100%;height:100%;object-fit:cover;border-radius:inherit;"/>
+      <span th:unless="${produit.imageUrl != null and !produit.imageUrl.isEmpty()}"
+            th:text="${produit.categorie != null and produit.categorie.nom == 'Electronique' ? '💻' :
+                       (produit.categorie != null and produit.categorie.nom == 'Vetements' ? '👕' :
+                       (produit.categorie != null and produit.categorie.nom == 'Livres' ? '📚' :
+                       (produit.categorie != null and produit.categorie.nom == 'Sport' ? '⚽' : '🏠')))}">📦</span>
     </div>
 
     <div>
       <div class="detail-cat" th:text="${produit.categorie != null ? produit.categorie.nom : 'Divers'}">Cat</div>
       <h1 class="detail-title" th:text="${produit.nom}">Nom produit</h1>
-      <div class="detail-price" th:text="${#numbers.formatDecimal(produit.prix,1,'COMMA',2,'POINT')} + ' €'">0 €</div>
+      <div class="detail-price"
+           th:text="${#numbers.formatDecimal(produit.prix,1,'COMMA',2,'POINT')} + ' €'">0 €</div>
       <p class="detail-desc" th:text="${produit.description}">Description</p>
 
       <div style="margin-bottom:1.5rem">
-        <span th:if="${produit.stock > 5}" class="stock-badge stock-ok">✓ En stock (<span th:text="${produit.stock}"></span> disponibles)</span>
-        <span th:if="${produit.stock > 0 and produit.stock <= 5}" class="stock-badge stock-low">⚠ Plus que <span th:text="${produit.stock}"></span> en stock !</span>
-        <span th:if="${produit.stock == 0}" class="stock-badge stock-low">✗ Rupture de stock</span>
+        <span th:if="${produit.stock > 5}"
+              class="stock-badge stock-ok">✓ En stock (<span th:text="${produit.stock}"></span> disponibles)</span>
+        <span th:if="${produit.stock > 0 and produit.stock <= 5}"
+              class="stock-badge stock-low">⚠ Plus que <span th:text="${produit.stock}"></span> en stock !</span>
+        <span th:if="${produit.stock == 0}"
+              class="stock-badge stock-low">✗ Rupture de stock</span>
       </div>
 
       <!-- Client : Ajouter au panier -->
       <div sec:authorize="hasRole('ROLE_CLIENT')" th:if="${produit.stock > 0}">
         <form th:action="@{/panier/ajouter}" method="post">
+          <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
           <input type="hidden" name="produitId" th:value="${produit.id}"/>
           <div class="qty-control">
             <label class="form-label" style="margin:0">Quantité :</label>
-            <input type="number" name="quantite" value="1" min="1" th:max="${produit.stock}" class="form-control qty-input"/>
+            <input type="number" name="quantite" value="1" min="1"
+                   th:max="${produit.stock}" class="form-control qty-input"/>
           </div>
           <button type="submit" class="btn btn-primary btn-lg">🛒 Ajouter au panier</button>
         </form>
@@ -79,6 +92,7 @@
         <a th:href="@{/inscription}" class="btn btn-outline btn-lg" style="margin-left:0.5rem">S'inscrire</a>
       </div>
 
+      <!-- Client + rupture -->
       <div sec:authorize="hasRole('ROLE_CLIENT')" th:if="${produit.stock == 0}">
         <div class="alert alert-error">Ce produit est actuellement en rupture de stock.</div>
       </div>
