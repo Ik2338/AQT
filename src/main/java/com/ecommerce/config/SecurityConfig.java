@@ -22,18 +22,20 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
             .requestMatchers("/","/catalogue/**","/produit/**","/inscription","/login",
-                             "/h2-console/**","/css/**","/js/**","/images/**").permitAll()
+                             "/css/**","/js/**","/images/**").permitAll()
             .requestMatchers("/panier/**","/commande/**","/profil/**").hasRole("CLIENT")
             .requestMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().authenticated()
         )
         .formLogin(f -> f.loginPage("/login").defaultSuccessUrl("/catalogue",true).permitAll())
         .logout(l -> l.logoutSuccessUrl("/catalogue").permitAll())
-        .csrf(c -> c.ignoringRequestMatchers("/h2-console/**"))
         .headers(h -> h.frameOptions(f -> f.sameOrigin()));
+        
+        // Supprime la ligne csrf().ignoringRequestMatchers("/h2-console/**")
+        // Garde la protection CSRF active par défaut
+        
         return http.build();
     }
-
     @Bean
     public UserDetailsService userDetailsService() {
         return email -> {
