@@ -15,8 +15,10 @@
     <name>Site E-Commerce</name>
     <description>Projet AQL 2025/2026</description>
     <properties>
-        <java.version>23</java.version>
-    </properties>
+    <java.version>23</java.version>
+    <sonar.host.url>http://localhost:9000</sonar.host.url>
+   
+</properties>
     <dependencies>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
@@ -44,12 +46,17 @@
                 </executions>
             </plugin>
             <plugin>
-    <groupId>org.apache.maven.plugins</groupId>
-    <artifactId>maven-surefire-plugin</artifactId>
-    <configuration>
-        <argLine>@{argLine} -Dnet.bytebuddy.experimental=true</argLine>
-    </configuration>
-</plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <argLine>@{argLine} -Dnet.bytebuddy.experimental=true</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.10.0.2594</version>
+            </plugin>
         </plugins>
     </build>
 </project>
