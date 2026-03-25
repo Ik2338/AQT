@@ -2,7 +2,6 @@ package com.ecommerce.model;
 
 import java.util.ArrayList;
 import java.util.List;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,9 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 
-/**
- * Panier de l'utilisateur (persistant en session via BDD).
- */
+// Panier de l'utilisateur, persisté en base de données
 @Entity
 @Table(name = "panier")
 public class Panier {
@@ -25,30 +22,29 @@ public class Panier {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Chaque utilisateur possède un seul panier
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "utilisateur_id", unique = true)
     private Utilisateur utilisateur;
 
+    // Lignes du panier, supprimées automatiquement si retirées
     @OneToMany(mappedBy = "panier", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LignePanier> lignes = new ArrayList<>();
 
-    // Constructeur vide
-    public Panier() {
-    }
+    public Panier() {}
 
-    // Constructeur avec utilisateur
     public Panier(Utilisateur utilisateur) {
         this.utilisateur = utilisateur;
     }
 
-    // Calcul du total du panier
+    // Calcule le montant total du panier
     public Double getTotal() {
         return lignes.stream()
                 .mapToDouble(l -> l.getProduit().getPrix() * l.getQuantite())
                 .sum();
     }
 
-    // Nombre total d'articles
+    // Retourne le nombre total d'articles dans le panier
     public int getNombreArticles() {
         return lignes.stream()
                 .mapToInt(LignePanier::getQuantite)
@@ -56,28 +52,12 @@ public class Panier {
     }
 
     // Getters et Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public Utilisateur getUtilisateur() { return utilisateur; }
+    public void setUtilisateur(Utilisateur utilisateur) { this.utilisateur = utilisateur; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Utilisateur getUtilisateur() {
-        return utilisateur;
-    }
-
-    public void setUtilisateur(Utilisateur utilisateur) {
-        this.utilisateur = utilisateur;
-    }
-
-    public List<LignePanier> getLignes() {
-        return lignes;
-    }
-
-    public void setLignes(List<LignePanier> lignes) {
-        this.lignes = lignes;
-    }
+    public List<LignePanier> getLignes() { return lignes; }
+    public void setLignes(List<LignePanier> lignes) { this.lignes = lignes; }
 }

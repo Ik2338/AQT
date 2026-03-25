@@ -17,12 +17,14 @@ public class AdminController {
     private final CommandeService commandeService;
     private final CategorieService categorieService;
 
+    // Injection des services via constructeur
     public AdminController(ProduitService p, CommandeService c, CategorieService cs) {
         this.produitService = p;
         this.commandeService = c;
         this.categorieService = cs;
     }
 
+    // Tableau de bord : affiche les statistiques globales
     @GetMapping({"", "/"})
     public String dashboard(Model model) {
         model.addAttribute("nbProduits", produitService.listerTous().size());
@@ -33,12 +35,14 @@ public class AdminController {
 
     // ─── PRODUITS ───────────────────────────────────────────
 
+    // Liste tous les produits
     @GetMapping("/produits")
     public String produits(Model model) {
         model.addAttribute("produits", produitService.listerTous());
         return "admin/produits/liste";
     }
 
+    // Affiche le formulaire de création d'un produit
     @GetMapping("/produits/nouveau")
     public String nouveauProduitForm(Model model) {
         model.addAttribute("produit", new Produit());
@@ -46,13 +50,14 @@ public class AdminController {
         return "admin/produits/formulaire";
     }
 
+    // Traite la soumission du formulaire de création
     @PostMapping("/produits/nouveau")
     public String creerProduit(
             @RequestParam String nom,
             @RequestParam(required = false) String description,
             @RequestParam Double prix,
             @RequestParam Integer stock,
-            @RequestParam(required = false) String imageUrl,      // ← AJOUT
+            @RequestParam(required = false) String imageUrl,
             @RequestParam(required = false) Long categorieId,
             RedirectAttributes ra) {
         Produit p = new Produit();
@@ -61,7 +66,8 @@ public class AdminController {
         p.setPrix(prix);
         p.setStock(stock);
         p.setActif(true);
-        p.setImageUrl(imageUrl);                                   // ← AJOUT
+        p.setImageUrl(imageUrl);
+        // Associe la catégorie si fournie
         if (categorieId != null) {
             try { p.setCategorie(categorieService.trouverParId(categorieId)); }
             catch (Exception ignored) {}
@@ -71,6 +77,7 @@ public class AdminController {
         return "redirect:/admin/produits";
     }
 
+    // Affiche le formulaire de modification d'un produit existant
     @GetMapping("/produits/modifier/{id}")
     public String modifierProduitForm(@PathVariable Long id, Model model) {
         model.addAttribute("produit", produitService.trouverParId(id));
@@ -78,6 +85,7 @@ public class AdminController {
         return "admin/produits/formulaire";
     }
 
+    // Traite la soumission du formulaire de modification
     @PostMapping("/produits/modifier/{id}")
     public String modifierProduit(
             @PathVariable Long id,
@@ -85,7 +93,7 @@ public class AdminController {
             @RequestParam(required = false) String description,
             @RequestParam Double prix,
             @RequestParam Integer stock,
-            @RequestParam(required = false) String imageUrl,      // ← AJOUT
+            @RequestParam(required = false) String imageUrl,
             @RequestParam(required = false) Long categorieId,
             RedirectAttributes ra) {
         Produit p = produitService.trouverParId(id);
@@ -93,18 +101,19 @@ public class AdminController {
         p.setDescription(description);
         p.setPrix(prix);
         p.setStock(stock);
-        p.setImageUrl(imageUrl);                                   // ← AJOUT
+        p.setImageUrl(imageUrl);
         if (categorieId != null) {
             try { p.setCategorie(categorieService.trouverParId(categorieId)); }
             catch (Exception ignored) {}
         } else {
-            p.setCategorie(null);
+            p.setCategorie(null); // Retire la catégorie si non sélectionnée
         }
         produitService.modifier(id, p);
         ra.addFlashAttribute("success", "Produit modifié.");
         return "redirect:/admin/produits";
     }
 
+    // Supprime un produit par son ID
     @PostMapping("/produits/supprimer/{id}")
     public String supprimerProduit(@PathVariable Long id, RedirectAttributes ra) {
         produitService.supprimer(id);
@@ -112,6 +121,7 @@ public class AdminController {
         return "redirect:/admin/produits";
     }
 
+    // Met à jour uniquement le stock d'un produit
     @PostMapping("/produits/stock/{id}")
     public String mettreAJourStock(@PathVariable Long id,
                                     @RequestParam int stock,
@@ -123,6 +133,7 @@ public class AdminController {
 
     // ─── CATEGORIES ─────────────────────────────────────────
 
+    // Liste toutes les catégories avec formulaire d'ajout
     @GetMapping("/categories")
     public String categories(Model model) {
         model.addAttribute("categories", categorieService.listerToutes());
@@ -130,6 +141,7 @@ public class AdminController {
         return "admin/categories";
     }
 
+    // Crée une nouvelle catégorie si le nom n'est pas vide
     @PostMapping("/categories/nouveau")
     public String creerCategorie(@RequestParam String nom, RedirectAttributes ra) {
         if (nom != null && !nom.isBlank()) {
@@ -139,6 +151,7 @@ public class AdminController {
         return "redirect:/admin/categories";
     }
 
+    // Supprime une catégorie par son ID
     @PostMapping("/categories/supprimer/{id}")
     public String supprimerCategorie(@PathVariable Long id, RedirectAttributes ra) {
         categorieService.supprimer(id);
@@ -148,6 +161,7 @@ public class AdminController {
 
     // ─── COMMANDES ──────────────────────────────────────────
 
+    // Liste toutes les commandes avec les états disponibles
     @GetMapping("/commandes")
     public String commandes(Model model) {
         model.addAttribute("commandes", commandeService.toutesLesCommandes());
@@ -155,6 +169,7 @@ public class AdminController {
         return "admin/commandes";
     }
 
+    // Met à jour l'état d'une commande (ex: EN_ATTENTE → EXPEDIEE)
     @PostMapping("/commandes/{id}/etat")
     public String changerEtat(@PathVariable Long id,
                                @RequestParam EtatCommande etat,

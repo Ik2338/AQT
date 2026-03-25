@@ -2,7 +2,6 @@ package com.ecommerce.model;
 
 import java.util.HashSet;
 import java.util.Set;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -35,21 +34,22 @@ public class Utilisateur {
     @NotBlank
     @Email
     @Column(nullable = false, unique = true)
-    private String email;
+    private String email; // Utilisé comme identifiant de connexion
 
     @NotBlank
     @Column(name = "mot_de_passe", nullable = false)
-    private String motDePasse;
+    private String motDePasse; // Stocké chiffré avec BCrypt
 
     @Column(nullable = false)
-    private boolean actif = true;
+    private boolean actif = true; // Compte actif par défaut
 
     @Column(length = 20)
-    private String telephone;
+    private String telephone; // Optionnel
 
     @Column(length = 200)
-    private String adresse;
+    private String adresse; // Optionnel
 
+    // Rôles chargés immédiatement (EAGER) pour Spring Security
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "utilisateur_role",
@@ -58,10 +58,9 @@ public class Utilisateur {
     )
     private Set<Role> roles = new HashSet<>();
 
+    public Utilisateur() {}
 
-    public Utilisateur() {
-    }
-
+    // Initialise un utilisateur actif sans rôles
     public Utilisateur(String nom, String prenom, String email, String motDePasse) {
         this.nom = nom;
         this.prenom = prenom;
@@ -70,76 +69,31 @@ public class Utilisateur {
         this.actif = true;
     }
 
+    // Getters et Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getNom() { return nom; }
+    public void setNom(String nom) { this.nom = nom; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getPrenom() { return prenom; }
+    public void setPrenom(String prenom) { this.prenom = prenom; }
 
-    public String getNom() {
-        return nom;
-    }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
+    public String getMotDePasse() { return motDePasse; }
+    public void setMotDePasse(String motDePasse) { this.motDePasse = motDePasse; }
 
-    public String getPrenom() {
-        return prenom;
-    }
+    public boolean isActif() { return actif; }
+    public void setActif(boolean actif) { this.actif = actif; }
 
-    public void setPrenom(String prenom) {
-        this.prenom = prenom;
-    }
+    public String getTelephone() { return telephone; }
+    public void setTelephone(String telephone) { this.telephone = telephone; }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getAdresse() { return adresse; }
+    public void setAdresse(String adresse) { this.adresse = adresse; }
 
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getMotDePasse() {
-        return motDePasse;
-    }
-
-    public void setMotDePasse(String motDePasse) {
-        this.motDePasse = motDePasse;
-    }
-
-    public boolean isActif() {
-        return actif;
-    }
-
-    public void setActif(boolean actif) {
-        this.actif = actif;
-    }
-
-    public String getTelephone() {
-        return telephone;
-    }
-
-    public void setTelephone(String telephone) {
-        this.telephone = telephone;
-    }
-
-    public String getAdresse() {
-        return adresse;
-    }
-
-    public void setAdresse(String adresse) {
-        this.adresse = adresse;
-    }
-
-    public Set<Role> getRoles() {
-        return roles;
-    }
-
-    public void setRoles(Set<Role> roles) {
-        this.roles = roles;
-    }
+    public Set<Role> getRoles() { return roles; }
+    public void setRoles(Set<Role> roles) { this.roles = roles; }
 }

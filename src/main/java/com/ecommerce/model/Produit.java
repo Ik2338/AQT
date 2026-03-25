@@ -30,35 +30,31 @@ public class Produit {
     private String description;
 
     @NotNull
-    @DecimalMin("0.01")
+    @DecimalMin("0.01") // Prix minimum : 0.01
     @Column(nullable = false)
     private Double prix;
 
     @NotNull
-    @Min(0)
+    @Min(0) // Stock ne peut pas être négatif
     @Column(nullable = false)
     private Integer stock;
 
     @Column(nullable = false)
-    private boolean actif = true;
+    private boolean actif = true; // Produit visible par défaut
 
-    // ─── IMAGE ────────────────────────────────────────────────────────────────
-    // Stocke le chemin relatif vers l'image du produit
-    // Exemple : "/images/produits/smartphone.jpg"
-    // Si null → Thymeleaf affiche l'image par défaut "/images/produits/default.jpg"
+    // Chemin relatif vers l'image (ex: "/images/produits/smartphone.jpg")
+    // Si null, Thymeleaf affiche l'image par défaut
     @Column(name = "image_url")
     private String imageUrl;
-    // ──────────────────────────────────────────────────────────────────────────
 
+    // Catégorie du produit, optionnelle
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "categorie_id")
     private Categorie categorie;
 
-    // ─── Constructeur vide ────────────────────────────────────────────────────
-    public Produit() {
-    }
+    public Produit() {}
 
-    // ─── Constructeur avec paramètres ─────────────────────────────────────────
+    // Initialise un produit actif sans image
     public Produit(String nom, String description, Double prix, Integer stock, Categorie categorie) {
         this.nom = nom;
         this.description = description;
@@ -66,72 +62,31 @@ public class Produit {
         this.stock = stock;
         this.categorie = categorie;
         this.actif = true;
-        this.imageUrl = null; // pas d'image par défaut
+        this.imageUrl = null;
     }
 
-    // ─── Getters et Setters ───────────────────────────────────────────────────
+    // Getters et Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public Long getId() {
-        return id;
-    }
+    public String getNom() { return nom; }
+    public void setNom(String nom) { this.nom = nom; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public String getNom() {
-        return nom;
-    }
+    public Double getPrix() { return prix; }
+    public void setPrix(Double prix) { this.prix = prix; }
 
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
+    public Integer getStock() { return stock; }
+    public void setStock(Integer stock) { this.stock = stock; }
 
-    public String getDescription() {
-        return description;
-    }
+    public boolean isActif() { return actif; }
+    public void setActif(boolean actif) { this.actif = actif; }
 
-    public void setDescription(String description) {
-        this.description = description;
-    }
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 
-    public Double getPrix() {
-        return prix;
-    }
-
-    public void setPrix(Double prix) {
-        this.prix = prix;
-    }
-
-    public Integer getStock() {
-        return stock;
-    }
-
-    public void setStock(Integer stock) {
-        this.stock = stock;
-    }
-
-    public boolean isActif() {
-        return actif;
-    }
-
-    public void setActif(boolean actif) {
-        this.actif = actif;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public Categorie getCategorie() {
-        return categorie;
-    }
-
-    public void setCategorie(Categorie categorie) {
-        this.categorie = categorie;
-    }
+    public Categorie getCategorie() { return categorie; }
+    public void setCategorie(Categorie categorie) { this.categorie = categorie; }
 }

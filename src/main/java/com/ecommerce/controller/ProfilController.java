@@ -1,4 +1,5 @@
 package com.ecommerce.controller;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -7,25 +8,32 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import com.ecommerce.service.UtilisateurService;
 
 @Controller
 @RequestMapping("/profil")
 public class ProfilController {
-    private final UtilisateurService utilisateurService;
-    public ProfilController(UtilisateurService u) { this.utilisateurService = u; }
 
+    private final UtilisateurService utilisateurService;
+
+    // Injection du service utilisateur via constructeur
+    public ProfilController(UtilisateurService u) {
+        this.utilisateurService = u;
+    }
+
+    // Affiche le profil de l'utilisateur connecté
     @GetMapping
     public String profil(Authentication auth, Model model) {
         model.addAttribute("utilisateur", utilisateurService.trouverParEmail(auth.getName()));
         return "profil/profil";
     }
 
+    // Met à jour les informations du profil de l'utilisateur connecté
     @PostMapping("/modifier")
-    public String modifier(@RequestParam String nom, @RequestParam String prenom,
-                           @RequestParam(required=false) String telephone,
-                           @RequestParam(required=false) String adresse,
+    public String modifier(@RequestParam String nom,
+                           @RequestParam String prenom,
+                           @RequestParam(required = false) String telephone,
+                           @RequestParam(required = false) String adresse,
                            Authentication auth, RedirectAttributes ra) {
         var u = utilisateurService.trouverParEmail(auth.getName());
         utilisateurService.mettreAJourProfil(u.getId(), nom, prenom, telephone, adresse);
