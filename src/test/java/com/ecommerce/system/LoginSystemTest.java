@@ -1,18 +1,27 @@
 package com.ecommerce.system;
 
-import io.github.bonigarcia.wdm.WebDriverManager;
-import org.junit.jupiter.api.*;
-import org.openqa.selenium.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.MethodOrderer;
+import org.junit.jupiter.api.Order;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 
-import static org.junit.jupiter.api.Assertions.*;
+import io.github.bonigarcia.wdm.WebDriverManager;
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class EcommerceSystemTest {
 
     private static WebDriver driver;
-    private static final String BASE_URL = "http://localhost:8081";
+    private static final String BASE_URL = "http://localhost:8080";
 
     @BeforeAll
     static void setUp() {
@@ -25,7 +34,9 @@ class EcommerceSystemTest {
 
     @AfterAll
     static void tearDown() {
-        if (driver != null) driver.quit();
+        if (driver != null) {
+			driver.quit();
+		}
     }
 
     // ─── TEST 1 : Accès catalogue sans connexion ────────────

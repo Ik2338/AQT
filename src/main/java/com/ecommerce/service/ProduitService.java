@@ -24,12 +24,15 @@ public class ProduitService {
     @Transactional(readOnly = true)
     public List<Produit> rechercher(String nom, Long categorieId) {
 
-        if (nom != null && !nom.isBlank() && categorieId != null)
-            return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
-        if (nom != null && !nom.isBlank())
-            return repo.findByNomContainingIgnoreCaseAndActifTrue(nom);
-        if (categorieId != null)
-            return repo.findByCategorieIdAndActifTrue(categorieId);
+        if (nom != null && !nom.isBlank() && categorieId != null) {
+			return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
+		}
+        if (nom != null && !nom.isBlank()) {
+			return repo.findByNomContainingIgnoreCaseAndActifTrue(nom);
+		}
+        if (categorieId != null) {
+			return repo.findByCategorieIdAndActifTrue(categorieId);
+		}
         // Aucun filtre : retourne tous les produits actifs
         if (nom != null && !nom.isBlank() && categorieId != null) {
 			return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);

@@ -6,13 +6,11 @@
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
+
 <nav class="navbar">
-  <a class="navbar-brand" th:href="@{/admin}">Shop<span>Elite</span> Admin</a>
+  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
   <div class="navbar-nav">
-    <a th:href="@{/admin}" class="nav-link">Dashboard</a>
-    <a th:href="@{/admin/produits}" class="nav-link active">Produits</a>
-    <a th:href="@{/admin/categories}" class="nav-link">Catégories</a>
-    <a th:href="@{/admin/commandes}" class="nav-link">Commandes</a>
+    <a th:href="@{/admin}" class="nav-link" style="color:var(--bordeaux)">⚙ Admin</a>
     <form th:action="@{/logout}" method="post" style="display:inline">
       <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
     </form>
@@ -26,6 +24,14 @@
   <div class="page-header">
     <h1 class="page-title">Gestion des <span>Produits</span></h1>
     <a th:href="@{/admin/produits/nouveau}" class="btn btn-primary">+ Nouveau produit</a>
+  </div>
+
+  <!-- Navigation admin — même style que catégories -->
+  <div class="admin-nav">
+    <a th:href="@{/admin}">Dashboard</a>
+    <a th:href="@{/admin/produits}" class="active"> Produits</a>
+    <a th:href="@{/admin/categories}"> Catégories</a>
+    <a th:href="@{/admin/commandes}">Commandes</a>
   </div>
 
   <!-- Tableau -->
@@ -87,7 +93,7 @@
 
           <!-- Statut -->
           <td>
-            <span th:if="${p.actif}"   class="stock-badge stock-ok">Actif</span>
+            <span th:if="${p.actif}"    class="stock-badge stock-ok">Actif</span>
             <span th:unless="${p.actif}" class="stock-badge stock-low">Inactif</span>
           </td>
 

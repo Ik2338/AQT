@@ -5,6 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
 import com.ecommerce.model.Role;
 import com.ecommerce.model.Utilisateur;
 import com.ecommerce.repository.RoleRepository;

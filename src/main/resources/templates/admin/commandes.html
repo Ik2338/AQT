@@ -8,20 +8,25 @@
 <nav class="navbar">
   <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
   <div class="navbar-nav">
+    <a th:href="@{/admin}" class="nav-link" style="color:var(--bordeaux)">⚙ Admin</a>
     <form th:action="@{/logout}" method="post" style="display:inline">
       <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
     </form>
   </div>
 </nav>
+
 <div class="container">
   <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-  <div class="page-header"><h1 class="page-title">Gestion des <span>Commandes</span></h1></div>
+  <div class="page-header">
+    <h1 class="page-title">Gestion des <span>Commandes</span></h1>
+  </div>
 
+  <!-- Navigation admin — même style que catégories -->
   <div class="admin-nav">
     <a th:href="@{/admin}">Dashboard</a>
-    <a th:href="@{/admin/produits}">📦 Produits</a>
-    <a th:href="@{/admin/categories}">🗂 Catégories</a>
-    <a th:href="@{/admin/commandes}" class="active">📋 Commandes</a>
+    <a th:href="@{/admin/produits}"> Produits</a>
+    <a th:href="@{/admin/categories}"> Catégories</a>
+    <a th:href="@{/admin/commandes}" class="active">Commandes</a>
   </div>
 
   <div th:if="${commandes.empty}" class="empty-state">
@@ -32,7 +37,15 @@
   <div class="table-container" th:unless="${commandes.empty}">
     <table>
       <thead>
-        <tr><th>#</th><th>Client</th><th>Date</th><th>Articles</th><th>Total</th><th>État actuel</th><th>Changer état</th></tr>
+        <tr>
+          <th>#</th>
+          <th>Client</th>
+          <th>Date</th>
+          <th>Articles</th>
+          <th>Total</th>
+          <th>État actuel</th>
+          <th>Changer état</th>
+        </tr>
       </thead>
       <tbody>
         <tr th:each="cmd : ${commandes}">
@@ -40,14 +53,19 @@
           <td th:text="${cmd.client.prenom + ' ' + cmd.client.nom}"></td>
           <td th:text="${#temporals.format(cmd.dateCommande,'dd/MM/yyyy HH:mm')}"></td>
           <td th:text="${cmd.lignes.size()} + ' article(s)'"></td>
-          <td style="color:var(--or);font-weight:700" th:text="${#numbers.formatDecimal(cmd.montantTotal,1,'COMMA',2,'POINT')} + ' €'"></td>
+          <td style="color:var(--or);font-weight:700"
+              th:text="${#numbers.formatDecimal(cmd.montantTotal,1,'COMMA',2,'POINT')} + ' €'"></td>
           <td>
-            <span th:class="${cmd.etat.name() == 'VALIDEE' ? 'badge badge-validee' : (cmd.etat.name() == 'ANNULEE' ? 'badge badge-annulee' : 'badge badge-en-cours')}"
+            <span th:class="${cmd.etat.name() == 'VALIDEE' ? 'badge badge-validee'
+                           : (cmd.etat.name() == 'ANNULEE' ? 'badge badge-annulee'
+                           : 'badge badge-en-cours')}"
                   th:text="${cmd.etat}"></span>
           </td>
           <td>
-            <form th:action="@{/admin/commandes/{id}/etat(id=${cmd.id})}" method="post" style="display:flex;gap:0.5rem">
-              <select name="etat" class="form-control" style="padding:0.4rem 0.7rem;font-size:0.85rem">
+            <form th:action="@{/admin/commandes/{id}/etat(id=${cmd.id})}" method="post"
+                  style="display:flex;gap:0.5rem">
+              <select name="etat" class="form-control"
+                      style="padding:0.4rem 0.7rem;font-size:0.85rem">
                 <option th:each="e : ${etats}" th:value="${e}" th:text="${e}"
                         th:selected="${cmd.etat == e}"></option>
               </select>
@@ -59,6 +77,7 @@
     </table>
   </div>
 </div>
+
 <footer><span>ShopElite</span> — Projet AQL 2025/2026 · Pr. S. CHANTIT</footer>
 </body>
 </html>

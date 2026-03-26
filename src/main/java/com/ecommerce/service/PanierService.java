@@ -2,6 +2,7 @@ package com.ecommerce.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.ecommerce.exception.StockInsuffisantException;
 import com.ecommerce.model.LignePanier;
 import com.ecommerce.model.Panier;

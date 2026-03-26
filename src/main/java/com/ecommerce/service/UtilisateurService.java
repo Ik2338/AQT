@@ -3,6 +3,7 @@ package com.ecommerce.service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.model.Utilisateur;
 import com.ecommerce.repository.RoleRepository;

@@ -1,8 +1,10 @@
 package com.ecommerce.service;
 
 import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.model.Categorie;
 import com.ecommerce.model.Produit;
