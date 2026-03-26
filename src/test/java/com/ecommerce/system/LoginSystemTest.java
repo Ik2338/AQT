@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class EcommerceSystemTest {
 
     private static WebDriver driver;
-    private static final String BASE_URL = "http://localhost:8081";
+    private static final String BASE_URL = "http://localhost:8080";
 
     @BeforeAll
     static void setUp() {
