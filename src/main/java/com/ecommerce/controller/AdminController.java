@@ -1,13 +1,20 @@
 package com.ecommerce.controller;
 
-import com.ecommerce.model.*;
-import com.ecommerce.model.Commande.EtatCommande;
-import com.ecommerce.service.*;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-import java.util.List;
+
+import com.ecommerce.model.Categorie;
+import com.ecommerce.model.Commande.EtatCommande;
+import com.ecommerce.model.Produit;
+import com.ecommerce.service.CategorieService;
+import com.ecommerce.service.CommandeService;
+import com.ecommerce.service.ProduitService;
 
 @Controller
 @RequestMapping("/admin")

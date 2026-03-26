@@ -1,9 +1,12 @@
 package com.ecommerce.config;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -11,7 +14,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import com.ecommerce.repository.UtilisateurRepository;
+
+import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
@@ -26,38 +32,57 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.authorizeHttpRequests(auth -> auth
-                // Accès public
-                .requestMatchers("/", "/catalogue/**", "/produit/**",
-                                 "/inscription", "/login",
-                                 "/css/**", "/js/**", "/images/**").permitAll()
-                // Réservé aux clients connectés
+                .requestMatchers("/", "/catalogue/**", "/produit/**", "/inscription",
+                        "/login", "/h2-console/**", "/css/**", "/js/**", "/images/**").permitAll()
                 .requestMatchers("/panier/**", "/commande/**", "/profil/**").hasRole("CLIENT")
-                // Réservé aux admins
                 .requestMatchers("/admin/**").hasRole("ADMIN")
                 .anyRequest().authenticated()
         )
-        .formLogin(f -> f.loginPage("/login")
-                         .defaultSuccessUrl("/catalogue", true)
-                         .permitAll())
-        .logout(l -> l.logoutSuccessUrl("/catalogue").permitAll())
-        .headers(h -> h.frameOptions(f -> f.sameOrigin())); // Permet les iframes same-origin
+        .formLogin(f -> f
+                .loginPage("/login")
+                .successHandler(roleBasedSuccessHandler())  // ← REDIRECT SELON RÔLE
+                .permitAll()
+        )
+        .logout(l -> l
+                .logoutSuccessUrl("/login?logout")
+                .permitAll()
+        )
+        .csrf(c -> c.ignoringRequestMatchers("/h2-console/**"))
+        .headers(h -> h.frameOptions(f -> f.sameOrigin()));
 
         return http.build();
     }
 
+    /**
+     * Redirige après login selon le rôle :
+     *   ROLE_ADMIN  → /admin
+     *   ROLE_CLIENT → /catalogue
+     */
+    @Bean
+    public AuthenticationSuccessHandler roleBasedSuccessHandler() {
+        return (HttpServletRequest request,
+                HttpServletResponse response,
+                Authentication authentication) -> {
+
+            boolean isAdmin = authentication.getAuthorities().stream()
+                    .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+            String redirectUrl = isAdmin ? "/admin" : "/catalogue";
+            response.sendRedirect(request.getContextPath() + redirectUrl);
+        };
+    }
+
     @Bean
     public UserDetailsService userDetailsService() {
-        // Charge l'utilisateur par email et construit son objet Spring Security
         return email -> {
             var u = utilisateurRepo.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("Introuvable: " + email));
+                    .orElseThrow(() -> new UsernameNotFoundException("Introuvable: " + email));
             var authorities = u.getRoles().stream()
-                .map(r -> new SimpleGrantedAuthority(r.getNom())).toList();
+                    .map(r -> new SimpleGrantedAuthority(r.getNom())).toList();
             return new User(u.getEmail(), u.getMotDePasse(), authorities);
         };
     }
 
-    // Encodage BCrypt pour les mots de passe
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

@@ -1,7 +1,6 @@
 package com.ecommerce.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
@@ -41,7 +40,7 @@ class CategorieServiceTest {
 
     @Mock private CategorieRepository categorieRepo;
     @InjectMocks private CategorieService categorieService;
-    @Mock private ProduitRepository produitRepo; 
+    @Mock private ProduitRepository produitRepo;
 
     private Categorie categorie;
 

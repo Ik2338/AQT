@@ -1,8 +1,10 @@
 package com.ecommerce.service;
 
 import java.util.List;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.model.Produit;
 import com.ecommerce.repository.ProduitRepository;
@@ -21,6 +23,7 @@ public class ProduitService {
     // Recherche filtrée par nom et/ou catégorie, parmi les produits actifs
     @Transactional(readOnly = true)
     public List<Produit> rechercher(String nom, Long categorieId) {
+<<<<<<< Updated upstream
         if (nom != null && !nom.isBlank() && categorieId != null)
             return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
         if (nom != null && !nom.isBlank())
@@ -28,6 +31,17 @@ public class ProduitService {
         if (categorieId != null)
             return repo.findByCategorieIdAndActifTrue(categorieId);
         // Aucun filtre : retourne tous les produits actifs
+=======
+        if (nom != null && !nom.isBlank() && categorieId != null) {
+			return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
+		}
+        if (nom != null && !nom.isBlank()) {
+			return repo.findByNomContainingIgnoreCaseAndActifTrue(nom);
+		}
+        if (categorieId != null) {
+			return repo.findByCategorieIdAndActifTrue(categorieId);
+		}
+>>>>>>> Stashed changes
         return repo.findByActifTrue();
     }
 
