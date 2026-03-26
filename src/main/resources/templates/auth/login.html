@@ -14,12 +14,7 @@
     <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
     <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
 
-    <div class="auth-info-box">
-      <strong>Comptes de test :</strong><br>
-      Admin: admin@ecommerce.com / admin123<br>
-      Client: jean.dupont@email.com / client123
-    </div>
-
+    
     <form th:action="@{/login}" method="post">
       <div class="form-group">
         <label class="form-label">Adresse email</label>

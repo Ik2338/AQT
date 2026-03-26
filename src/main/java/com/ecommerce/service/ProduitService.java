@@ -23,7 +23,7 @@ public class ProduitService {
     // Recherche filtrée par nom et/ou catégorie, parmi les produits actifs
     @Transactional(readOnly = true)
     public List<Produit> rechercher(String nom, Long categorieId) {
-<<<<<<< Updated upstream
+
         if (nom != null && !nom.isBlank() && categorieId != null)
             return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
         if (nom != null && !nom.isBlank())
@@ -31,7 +31,6 @@ public class ProduitService {
         if (categorieId != null)
             return repo.findByCategorieIdAndActifTrue(categorieId);
         // Aucun filtre : retourne tous les produits actifs
-=======
         if (nom != null && !nom.isBlank() && categorieId != null) {
 			return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
 		}
@@ -41,7 +40,6 @@ public class ProduitService {
         if (categorieId != null) {
 			return repo.findByCategorieIdAndActifTrue(categorieId);
 		}
->>>>>>> Stashed changes
         return repo.findByActifTrue();
     }
 

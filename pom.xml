@@ -29,6 +29,22 @@
         <dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>runtime</scope></dependency>
         <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-test</artifactId><scope>test</scope></dependency>
         <dependency><groupId>org.springframework.security</groupId><artifactId>spring-security-test</artifactId><scope>test</scope></dependency>
+   
+   <!-- Selenium -->
+<dependency>
+    <groupId>org.seleniumhq.selenium</groupId>
+    <artifactId>selenium-java</artifactId>
+    <version>4.18.1</version>
+    <scope>test</scope>
+</dependency>
+
+<!-- ChromeDriver automatique -->
+<dependency>
+    <groupId>io.github.bonigarcia</groupId>
+    <artifactId>webdrivermanager</artifactId>
+    <version>5.7.0</version>
+    <scope>test</scope>
+</dependency>
     </dependencies>
     <build>
         <plugins>
@@ -59,4 +75,5 @@
             </plugin>
         </plugins>
     </build>
+    
 </project>
