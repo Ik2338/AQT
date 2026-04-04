@@ -7,7 +7,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrlPattern;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.view;
 
@@ -29,7 +28,8 @@ class AdminControllerIT extends BaseIT {
     void R1_adminSansAuth_redirectLogin() throws Exception {
         mockMvc.perform(get("/admin"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login"));
+                // Spring renvoie l'URL absolue http://localhost/login en IT
+                .andExpect(redirectedUrl("http://localhost/login"));
     }
 
     @Test
@@ -90,12 +90,36 @@ class AdminControllerIT extends BaseIT {
                 .andExpect(redirectedUrl("/admin/produits"));
     }
 
+    // CORRECTION R7 : on crée d'abord le produit, puis on supprime celui qu'on vient de créer
+    // au lieu de supposer que l'ID 1 existe dans data.sql
     @Test
     @DisplayName("R7 - POST /admin/produits/supprimer/{id} desactive et redirige")
     @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
     void R7_adminSupprimerProduit_redirectListeProduits() throws Exception {
-        // ID 1 = Smartphone Samsung — existe dans data.sql de test
-        mockMvc.perform(post("/admin/produits/supprimer/1")
+        // Étape 1 : créer un produit pour avoir un ID valide
+        var result = mockMvc.perform(post("/admin/produits/nouveau")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("nom", "Produit A Supprimer")
+                        .param("prix", "10.00")
+                        .param("stock", "5"))
+                .andExpect(status().is3xxRedirection())
+                .andReturn();
+
+        // Étape 2 : récupérer la liste pour trouver l'ID du produit créé
+        var listResult = mockMvc.perform(get("/admin/produits"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Étape 3 : extraire l'ID depuis le modèle
+        var produits = (java.util.List<?>) listResult.getModelAndView().getModel().get("produits");
+        assertNotNull(produits, "La liste de produits ne doit pas être nulle");
+        assertTrue(!produits.isEmpty(), "Il doit y avoir au moins un produit");
+
+        Long produitId = ((com.ecommerce.model.Produit) produits.get(produits.size() - 1)).getId();
+
+        // Étape 4 : supprimer ce produit
+        mockMvc.perform(post("/admin/produits/supprimer/" + produitId)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/produits"));
@@ -125,17 +149,31 @@ class AdminControllerIT extends BaseIT {
                 .andExpect(redirectedUrl("/admin/categories"));
     }
 
-    // CORRECTION R10 : l'original supprimait ID=1 (catégorie de data.sql)
-    // sans lien avec la catégorie créée dans le même test.
-    // Maintenant on crée une catégorie ET on supprime bien ID=1 de data.sql
-    // avec un commentaire explicite pour clarifier l'intention.
+    // CORRECTION R10 : on crée une catégorie puis on supprime celle qu'on vient de créer
     @Test
     @DisplayName("R10 - POST /admin/categories/supprimer/{id} supprime et redirige")
     @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
     void R10_adminSupprimerCategorie_redirectListeCategories() throws Exception {
-        // ID 1 = catégorie "Electronique" insérée dans data.sql de test
-        // @Transactional garantit le rollback : elle sera restaurée après ce test
-        mockMvc.perform(post("/admin/categories/supprimer/1")
+        // Étape 1 : créer une catégorie
+        mockMvc.perform(post("/admin/categories/nouveau")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("nom", "Categorie A Supprimer"))
+                .andExpect(status().is3xxRedirection());
+
+        // Étape 2 : récupérer la liste pour trouver l'ID de la catégorie créée
+        var listResult = mockMvc.perform(get("/admin/categories"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        var categories = (java.util.List<?>) listResult.getModelAndView().getModel().get("categories");
+        assertNotNull(categories, "La liste de catégories ne doit pas être nulle");
+        assertTrue(!categories.isEmpty(), "Il doit y avoir au moins une catégorie");
+
+        Long catId = ((com.ecommerce.model.Categorie) categories.get(categories.size() - 1)).getId();
+
+        // Étape 3 : supprimer cette catégorie
+        mockMvc.perform(post("/admin/categories/supprimer/" + catId)
                         .with(csrf()))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/categories"));
@@ -153,33 +191,43 @@ class AdminControllerIT extends BaseIT {
                 .andExpect(model().attributeExists("commandes"));
     }
 
-    // CORRECTION R12 : le test original avait un bloc "if" sans assertion de
-    // sécurité — si la redirection échouait, le test passait silencieusement
-    // sans rien vérifier. Ajout de assertNotNull + assertTrue obligatoires.
+    // CORRECTION R12 : flux complet auto-suffisant — crée produit + commande sans dépendre de data.sql
     @Test
     @DisplayName("R12 - POST /admin/commandes/{id}/etat change l etat et redirige")
     @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN", "CLIENT"})
     void R12_adminChangerEtatCommande_redirect() throws Exception {
-        // Étape 1 : ajouter un produit au panier
+        // Étape 1 : créer un produit pour avoir quelque chose à ajouter au panier
+        mockMvc.perform(post("/admin/produits/nouveau")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("nom", "Produit Pour Commande R12")
+                        .param("prix", "50.00")
+                        .param("stock", "10"))
+                .andExpect(status().is3xxRedirection());
+
+        // Étape 2 : récupérer l'ID du produit créé
+        var listResult = mockMvc.perform(get("/admin/produits")).andReturn();
+        var produits = (java.util.List<?>) listResult.getModelAndView().getModel().get("produits");
+        Long produitId = ((com.ecommerce.model.Produit) produits.get(produits.size() - 1)).getId();
+
+        // Étape 3 : ajouter au panier
         mockMvc.perform(post("/panier/ajouter")
                         .with(csrf())
-                        .param("produitId", "1")
+                        .param("produitId", String.valueOf(produitId))
                         .param("quantite", "1"));
 
-        // Étape 2 : valider le panier pour créer une commande
+        // Étape 4 : valider le panier
         var result = mockMvc.perform(post("/panier/valider")
                         .with(csrf())
-                        .param("adresse", "Test"))
+                        .param("adresse", "12 Rue Test, Casablanca"))
                 .andReturn();
 
-        // CORRECTION : assertions obligatoires AVANT d'utiliser l'URL
-        // Sans ça, si la redirection échoue, le test passait quand même !
         String redirectUrl = result.getResponse().getRedirectedUrl();
         assertNotNull(redirectUrl, "La redirection vers /commande/{id} est attendue");
         assertTrue(redirectUrl.startsWith("/commande/"),
                 "L URL doit commencer par /commande/ mais était : " + redirectUrl);
 
-        // Étape 3 : changer l'état de la commande créée
+        // Étape 5 : changer l'état
         String commandeId = redirectUrl.replace("/commande/", "");
         mockMvc.perform(post("/admin/commandes/" + commandeId + "/etat")
                         .with(csrf())

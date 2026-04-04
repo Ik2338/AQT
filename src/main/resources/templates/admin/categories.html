@@ -44,6 +44,10 @@
         <span style="color:var(--texte);font-weight:500" th:text="${cat.nom}"></span>
         <form th:action="@{/admin/categories/supprimer/{id}(id=${cat.id})}"
               method="post" onsubmit="return confirm('Supprimer cette catégorie ?')">
+          <!-- CORRECTION : CSRF avec th:if -->
+          <input type="hidden" th:if="${_csrf != null}" 
+                 th:name="${_csrf.parameterName}" 
+                 th:value="${_csrf.token}"/>
           <button type="submit" class="btn btn-danger btn-sm">✕</button>
         </form>
       </div>
@@ -55,6 +59,10 @@
         Nouvelle catégorie
       </h3>
       <form th:action="@{/admin/categories/nouveau}" method="post">
+        <!-- CORRECTION : CSRF avec th:if -->
+        <input type="hidden" th:if="${_csrf != null}" 
+               th:name="${_csrf.parameterName}" 
+               th:value="${_csrf.token}"/>
         <div class="form-group">
           <label class="form-label">Nom</label>
           <input type="text" name="nom" class="form-control"

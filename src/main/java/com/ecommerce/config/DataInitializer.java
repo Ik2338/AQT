@@ -1,58 +1,60 @@
 package com.ecommerce.config;
 
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import org.springframework.boot.ApplicationArguments;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Component;
 
 import com.ecommerce.model.Role;
 import com.ecommerce.model.Utilisateur;
 import com.ecommerce.repository.RoleRepository;
 import com.ecommerce.repository.UtilisateurRepository;
 
-@Configuration
-public class DataInitializer {
+@Component
+@Profile("test")
+public class DataInitializer implements ApplicationRunner {
 
-    @Value("${app.init.admin-password}")
-    private String adminPassword; // Mot de passe admin depuis application.properties
+    private final UtilisateurRepository utilisateurRepo;
+    private final RoleRepository roleRepo;
+    private final PasswordEncoder passwordEncoder;
 
-    @Value("${app.init.client-password}")
-    private String clientPassword; // Mot de passe client depuis application.properties
+    public DataInitializer(UtilisateurRepository utilisateurRepo,
+                           RoleRepository roleRepo,
+                           PasswordEncoder passwordEncoder) {
+        this.utilisateurRepo = utilisateurRepo;
+        this.roleRepo = roleRepo;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-    @Bean
-    public CommandLineRunner initUsers(UtilisateurRepository userRepo,
-                                       RoleRepository roleRepo,
-                                       PasswordEncoder passwordEncoder) {
-        // Exécuté au démarrage : initialise les rôles et utilisateurs par défaut
-        return args -> {
-
-            // Crée les rôles si inexistants
-            Role roleClient = roleRepo.findByNom("ROLE_CLIENT")
-                .orElseGet(() -> roleRepo.save(new Role("ROLE_CLIENT")));
-            Role roleAdmin = roleRepo.findByNom("ROLE_ADMIN")
+    @Override
+    public void run(ApplicationArguments args) {
+        // Crée les rôles si absents
+        Role roleAdmin = roleRepo.findByNom("ROLE_ADMIN")
                 .orElseGet(() -> roleRepo.save(new Role("ROLE_ADMIN")));
+        Role roleClient = roleRepo.findByNom("ROLE_CLIENT")
+                .orElseGet(() -> roleRepo.save(new Role("ROLE_CLIENT")));
 
-            // Crée l'admin par défaut si absent
-            if (userRepo.findByEmail("admin@ecommerce.com").isEmpty()) {
-                Utilisateur admin = new Utilisateur("Admin", "System",
+        // Crée l'admin si absent
+        if (!utilisateurRepo.existsByEmail("admin@ecommerce.com")) {
+            Utilisateur admin = new Utilisateur("Admin", "Super",
                     "admin@ecommerce.com",
-                    passwordEncoder.encode(adminPassword));
-                admin.getRoles().add(roleAdmin);
-                admin.getRoles().add(roleClient);
-                userRepo.save(admin);
-                System.out.println("✅ Admin créé");
-            }
+                    passwordEncoder.encode("admin123"));
+            admin.setActif(true);
+            admin.getRoles().add(roleAdmin);
+            utilisateurRepo.save(admin);
+            System.out.println("✅ Admin créé");
+        }
 
-            // Crée un client de test si absent
-            if (userRepo.findByEmail("jean.dupont@email.com").isEmpty()) {
-                Utilisateur jean = new Utilisateur("Dupont", "Jean",
+        // Crée jean.dupont avec le mot de passe "client123"
+        if (!utilisateurRepo.existsByEmail("jean.dupont@email.com")) {
+            Utilisateur jean = new Utilisateur("Dupont", "Jean",
                     "jean.dupont@email.com",
-                    passwordEncoder.encode(clientPassword));
-                jean.getRoles().add(roleClient);
-                userRepo.save(jean);
-                System.out.println("✅ Jean créé");
-            }
-        };
+                    passwordEncoder.encode("client123"));
+            jean.setActif(true);
+            jean.getRoles().add(roleClient);
+            utilisateurRepo.save(jean);
+            System.out.println("✅ Jean créé");
+        }
     }
 }

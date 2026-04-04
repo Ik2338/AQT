@@ -39,11 +39,21 @@ public class Panier {
     }
 
     // Calcule le montant total du panier
-    public Double getTotal() {
+    public double getTotal() {
+        // CORRECTION : Éviter NullPointerException
+        if (lignes == null || lignes.isEmpty()) {
+            return 0.0;
+        }
         return lignes.stream()
-                .mapToDouble(l -> l.getProduit().getPrix() * l.getQuantite())
+                .mapToDouble(ligne -> {
+                    if (ligne.getProduit() == null) {
+                        return 0.0;
+                    }
+                    return ligne.getProduit().getPrix() * ligne.getQuantite();
+                })
                 .sum();
     }
+    
 
     // Retourne le nombre total d'articles dans le panier
     public int getNombreArticles() {

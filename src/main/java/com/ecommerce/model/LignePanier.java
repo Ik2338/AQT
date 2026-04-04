@@ -1,39 +1,31 @@
 package com.ecommerce.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
-@Table(name = "ligne_panier")
+@Table(name = "lignes_panier")
 public class LignePanier {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Panier auquel appartient cette ligne
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "panier_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "panier_id")
+    @JsonIgnore
     private Panier panier;
 
-    // Produit concerné par cette ligne
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "produit_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "produit_id")
     private Produit produit;
 
-    @Column(nullable = false)
-    private Integer quantite;
+    private int quantite;
 
+    // Constructeurs
     public LignePanier() {}
 
-    public LignePanier(Panier panier, Produit produit, Integer quantite) {
+    public LignePanier(Panier panier, Produit produit, int quantite) {
         this.panier = panier;
         this.produit = produit;
         this.quantite = quantite;
@@ -49,11 +41,18 @@ public class LignePanier {
     public Produit getProduit() { return produit; }
     public void setProduit(Produit produit) { this.produit = produit; }
 
-    public Integer getQuantite() { return quantite; }
-    public void setQuantite(Integer quantite) { this.quantite = quantite; }
+    public int getQuantite() { return quantite; }
+    public void setQuantite(int quantite) { this.quantite = quantite; }
 
-    // Retourne le sous-total basé sur le prix actuel du produit
-    public Double getSousTotal() {
+    /**
+     * Calcule le sous-total pour cette ligne.
+     * CORRECTION : Vérifie que produit n'est pas null
+     */
+    public double getSousTotal() {
+        // ← CORRECTION CRITIQUE
+        if (produit == null) {
+            return 0.0;
+        }
         return produit.getPrix() * quantite;
     }
 }

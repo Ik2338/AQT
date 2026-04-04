@@ -1,7 +1,11 @@
 package com.ecommerce.exception;
 
-// Exception levée quand une ressource est introuvable en base de données
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(HttpStatus.NOT_FOUND)   // ← ajouter cette ligne
 public class ResourceNotFoundException extends RuntimeException {
+    
 
     // Construit le message d'erreur avec le nom de la ressource et son ID
     public ResourceNotFoundException(String resource, Long id) {

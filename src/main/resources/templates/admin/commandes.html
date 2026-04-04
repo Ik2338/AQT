@@ -21,7 +21,6 @@
     <h1 class="page-title">Gestion des <span>Commandes</span></h1>
   </div>
 
-  <!-- Navigation admin — même style que catégories -->
   <div class="admin-nav">
     <a th:href="@{/admin}">Dashboard</a>
     <a th:href="@{/admin/produits}"> Produits</a>
@@ -50,7 +49,10 @@
       <tbody>
         <tr th:each="cmd : ${commandes}">
           <td><strong th:text="'#' + cmd.id"></strong></td>
-          <td th:text="${cmd.client.prenom + ' ' + cmd.client.nom}"></td>
+          <td>
+            <span th:if="${cmd.client != null}" th:text="${cmd.client.prenom + ' ' + cmd.client.nom}"></span>
+            <span th:unless="${cmd.client != null}" style="color: var(--gris);">Client supprimé</span>
+          </td>
           <td th:text="${#temporals.format(cmd.dateCommande,'dd/MM/yyyy HH:mm')}"></td>
           <td th:text="${cmd.lignes.size()} + ' article(s)'"></td>
           <td style="color:var(--or);font-weight:700"
@@ -64,6 +66,10 @@
           <td>
             <form th:action="@{/admin/commandes/{id}/etat(id=${cmd.id})}" method="post"
                   style="display:flex;gap:0.5rem">
+              <!-- CORRECTION : CSRF avec th:if -->
+              <input type="hidden" th:if="${_csrf != null}" 
+                     th:name="${_csrf.parameterName}" 
+                     th:value="${_csrf.token}"/>
               <select name="etat" class="form-control"
                       style="padding:0.4rem 0.7rem;font-size:0.85rem">
                 <option th:each="e : ${etats}" th:value="${e}" th:text="${e}"

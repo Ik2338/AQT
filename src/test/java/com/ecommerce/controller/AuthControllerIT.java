@@ -73,7 +73,7 @@ class AuthControllerIT extends BaseIT {
                         .param("email", "marie.dupont@test.com")
                         .param("motDePasse", "password123"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
+                .andExpect(redirectedUrl("http://localhost/login"));
     }
 
     // R5 – POST /inscription email déjà existant → redirect /inscription
@@ -125,6 +125,6 @@ class AuthControllerIT extends BaseIT {
     void R8_panierSansAuth_redirectLogin() throws Exception {
         mockMvc.perform(get("/panier"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login"));
+                .andExpect(redirectedUrl("http://localhost/login"));
     }
 }

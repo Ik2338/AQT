@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.ecommerce.model.Utilisateur;
 import com.ecommerce.service.UtilisateurService;
 
 @Controller
@@ -17,26 +18,39 @@ public class ProfilController {
 
     private final UtilisateurService utilisateurService;
 
-    // Injection du service utilisateur via constructeur
     public ProfilController(UtilisateurService u) {
         this.utilisateurService = u;
     }
 
-    // Affiche le profil de l'utilisateur connecté
+    // Méthode utilitaire pour récupérer l'utilisateur connecté
+    private Utilisateur getUser(Authentication auth) {
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            return null;
+        }
+        return utilisateurService.trouverParEmailOptional(auth.getName()).orElse(null);
+    }
+
     @GetMapping
     public String profil(Authentication auth, Model model) {
-        model.addAttribute("utilisateur", utilisateurService.trouverParEmail(auth.getName()));
+        Utilisateur u = getUser(auth);
+        if (u == null) {
+            return "redirect:/login";
+        }
+        model.addAttribute("utilisateur", u);
         return "profil/profil";
     }
 
-    // Met à jour les informations du profil de l'utilisateur connecté
     @PostMapping("/modifier")
     public String modifier(@RequestParam String nom,
                            @RequestParam String prenom,
                            @RequestParam(required = false) String telephone,
                            @RequestParam(required = false) String adresse,
                            Authentication auth, RedirectAttributes ra) {
-        var u = utilisateurService.trouverParEmail(auth.getName());
+        Utilisateur u = getUser(auth);
+        if (u == null) {
+            ra.addFlashAttribute("error", "Veuillez vous connecter");
+            return "redirect:/login";
+        }
         utilisateurService.mettreAJourProfil(u.getId(), nom, prenom, telephone, adresse);
         ra.addFlashAttribute("success", "Profil mis à jour !");
         return "redirect:/profil";

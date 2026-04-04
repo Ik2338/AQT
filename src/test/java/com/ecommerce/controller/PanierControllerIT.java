@@ -38,7 +38,7 @@ class PanierControllerIT extends BaseIT {
     void R1_panierSansAuth_redirectLogin() throws Exception {
         mockMvc.perform(get("/panier"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login"));
+                .andExpect(redirectedUrl("http://localhost/login"));
     }
 
     // R2 – GET /panier avec CLIENT authentifié → 200

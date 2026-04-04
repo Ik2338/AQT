@@ -29,7 +29,7 @@ class CommandeControllerIT extends BaseIT {
     void R1_historiqueSansAuth_redirectLogin() throws Exception {
         mockMvc.perform(get("/commande/historique"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrlPattern("**/login"));
+                .andExpect(redirectedUrl("/login"));
     }
 
     // R2 – GET /commande/historique avec CLIENT → 200

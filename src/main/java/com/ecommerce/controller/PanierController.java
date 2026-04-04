@@ -25,33 +25,41 @@ public class PanierController {
     private final CommandeService commandeService;
     private final UtilisateurService utilisateurService;
 
-    // Injection des services via constructeur
     public PanierController(PanierService p, CommandeService c, UtilisateurService u) {
         this.panierService = p;
         this.commandeService = c;
         this.utilisateurService = u;
     }
 
-    // Méthode utilitaire : récupère l'utilisateur connecté depuis l'authentification
+    // MÉTHODE MODIFIÉE : utilise Optional et gère le cas null
     private Utilisateur getUser(Authentication auth) {
-        return utilisateurService.trouverParEmail(auth.getName());
+        if (auth == null || !auth.isAuthenticated() || "anonymousUser".equals(auth.getName())) {
+            return null;
+        }
+        return utilisateurService.trouverParEmailOptional(auth.getName()).orElse(null);
     }
 
-    // Affiche le panier de l'utilisateur connecté
     @GetMapping
     public String voirPanier(Authentication auth, Model model) {
         Utilisateur u = getUser(auth);
+        if (u == null) {
+            return "redirect:/login";
+        }
         model.addAttribute("panier", panierService.obtenirOuCreer(u));
         return "panier/panier";
     }
 
-    // Ajoute un produit au panier (quantité par défaut : 1)
     @PostMapping("/ajouter")
     public String ajouter(@RequestParam Long produitId,
                           @RequestParam(defaultValue = "1") int quantite,
                           Authentication auth, RedirectAttributes ra) {
+        Utilisateur u = getUser(auth);
+        if (u == null) {
+            ra.addFlashAttribute("error", "Veuillez vous connecter");
+            return "redirect:/login";
+        }
         try {
-            panierService.ajouterProduit(getUser(auth), produitId, quantite);
+            panierService.ajouterProduit(u, produitId, quantite);
             ra.addFlashAttribute("success", "Produit ajouté au panier !");
         } catch (Exception e) {
             ra.addFlashAttribute("error", e.getMessage());
@@ -59,28 +67,36 @@ public class PanierController {
         return "redirect:/panier";
     }
 
-    // Modifie la quantité d'une ligne du panier
     @PostMapping("/modifier/{ligneId}")
     public String modifier(@PathVariable Long ligneId,
                            @RequestParam int quantite,
                            Authentication auth, RedirectAttributes ra) {
-        panierService.modifierQuantite(getUser(auth), ligneId, quantite);
+        Utilisateur u = getUser(auth);
+        if (u == null) {
+			return "redirect:/login";
+		}
+        panierService.modifierQuantite(u, ligneId, quantite);
         return "redirect:/panier";
     }
 
-    // Supprime une ligne du panier
     @PostMapping("/supprimer/{ligneId}")
     public String supprimer(@PathVariable Long ligneId, Authentication auth) {
-        panierService.supprimerLigne(getUser(auth), ligneId);
+        Utilisateur u = getUser(auth);
+        if (u == null) {
+			return "redirect:/login";
+		}
+        panierService.supprimerLigne(u, ligneId);
         return "redirect:/panier";
     }
 
-    // Affiche la page de confirmation avant validation de la commande
     @GetMapping("/checkout")
     public String checkout(Authentication auth, Model model) {
         Utilisateur u = getUser(auth);
+        if (u == null) {
+			return "redirect:/login";
+		}
+
         Panier panier = panierService.obtenirOuCreer(u);
-        // Redirige vers le panier si celui-ci est vide
         if (panier.getLignes().isEmpty()) {
             return "redirect:/panier";
         }
@@ -89,18 +105,20 @@ public class PanierController {
         return "panier/checkout";
     }
 
-    // Valide le panier et crée la commande
     @PostMapping("/valider")
     public String valider(@RequestParam(required = false) String adresse,
                           Authentication auth, RedirectAttributes ra) {
+        Utilisateur u = getUser(auth);
+        if (u == null) {
+			return "redirect:/login";
+		}
+
         try {
-            Utilisateur u = getUser(auth);
             Panier panier = panierService.obtenirOuCreer(u);
             Commande commande = commandeService.validerPanier(u, panier, adresse);
             ra.addFlashAttribute("success", "Commande #" + commande.getId() + " confirmée !");
             return "redirect:/commande/" + commande.getId();
         } catch (Exception e) {
-            // En cas d'erreur (stock insuffisant, etc.), retourne au checkout
             ra.addFlashAttribute("error", e.getMessage());
             return "redirect:/panier/checkout";
         }
