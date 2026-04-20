@@ -181,4 +181,90 @@ class AdminControllerTest {
            .andExpect(status().is3xxRedirection())
            .andExpect(redirectedUrl("/admin/commandes"));
     }
+ // Ajouter à la fin de AdminControllerTest, avant la dernière accolade
+
+    @Test
+    @DisplayName("R10 - Modifier produit avec categorieId valide")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void R10_modifierProduitAvecCategorie_redirige() throws Exception {
+        when(produitService.trouverParId(1L)).thenReturn(produit);
+        when(categorieService.trouverParId(1L)).thenReturn(categorie);
+        when(produitService.modifier(anyLong(), any())).thenReturn(produit);
+
+        mvc.perform(post("/admin/produits/modifier/1")
+           .with(csrf())
+           .param("nom", "Laptop Pro")
+           .param("prix", "1299.99")
+           .param("stock", "5")
+           .param("categorieId", "1"))   // ← branche categorieId != null couverte
+           .andExpect(status().is3xxRedirection())
+           .andExpect(redirectedUrl("/admin/produits"));
+    }
+
+    @Test
+    @DisplayName("R11 - Modifier produit sans categorieId met categorie a null")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void R11_modifierProduitSansCategorie_setCategorieNull() throws Exception {
+        when(produitService.trouverParId(1L)).thenReturn(produit);
+        when(produitService.modifier(anyLong(), any())).thenReturn(produit);
+
+        mvc.perform(post("/admin/produits/modifier/1")
+           .with(csrf())
+           .param("nom", "Laptop")
+           .param("prix", "999.99")
+           .param("stock", "10"))        // ← pas de categorieId → branche else couverte
+           .andExpect(status().is3xxRedirection())
+           .andExpect(redirectedUrl("/admin/produits"));
+    }
+
+    @Test
+    @DisplayName("R12 - Mettre a jour stock redirige")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void R12_mettreAJourStock_redirige() throws Exception {
+        mvc.perform(post("/admin/produits/stock/1")
+           .with(csrf())
+           .param("stock", "50"))
+           .andExpect(status().is3xxRedirection())
+           .andExpect(redirectedUrl("/admin/produits"));
+
+        verify(produitService).mettreAJourStock(1L, 50);
+    }
+
+    @Test
+    @DisplayName("R13 - Supprimer categorie redirige")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void R13_supprimerCategorie_redirige() throws Exception {
+        mvc.perform(post("/admin/categories/supprimer/1")
+           .with(csrf()))
+           .andExpect(status().is3xxRedirection())
+           .andExpect(redirectedUrl("/admin/categories"));
+
+        verify(categorieService).supprimer(1L);
+    }
+
+    @Test
+    @DisplayName("R14 - Creer categorie avec nom vide ne cree pas et redirige")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void R14_creerCategorieNomVide_neCreePassEtRedirige() throws Exception {
+        mvc.perform(post("/admin/categories/nouveau")
+           .with(csrf())
+           .param("nom", "   "))         // ← branche isBlank() couverte
+           .andExpect(status().is3xxRedirection())
+           .andExpect(redirectedUrl("/admin/categories"));
+
+        verify(categorieService, org.mockito.Mockito.never()).creer(any());
+    }
+
+    @Test
+    @DisplayName("R15 - Formulaire modification produit retourne vue formulaire")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void R15_modifierProduitForm_retourneFormulaire() throws Exception {
+        when(produitService.trouverParId(1L)).thenReturn(produit);
+        when(categorieService.listerToutes()).thenReturn(List.of(categorie));
+
+        mvc.perform(get("/admin/produits/modifier/1"))
+           .andExpect(status().isOk())
+           .andExpect(view().name("admin/produits/formulaire"))
+           .andExpect(model().attributeExists("produit", "categories"));
+    }
 }

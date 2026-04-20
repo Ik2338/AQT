@@ -3,151 +3,177 @@ package com.ecommerce.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Optional;
-
+import static org.mockito.Mockito.lenient;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationContext;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.model.Role;
 import com.ecommerce.model.Utilisateur;
 import com.ecommerce.repository.RoleRepository;
 import com.ecommerce.repository.UtilisateurRepository;
 
-/**
- * Tests unitaires – UtilisateurService
- * Couvre : inscription (R1–R5) et profil (R6)
- *
- * Règles métier testées :
- *  R1 – Inscription valide : compte créé avec rôle ROLE_CLIENT
- *  R2 – Email déjà utilisé : lève une exception
- *  R3 – Mot de passe encodé à l'enregistrement
- *  R4 – Compte actif par défaut après inscription
- *  R5 – trouverParEmail lève exception si email introuvable
- *  R6 – mettreAJourProfil modifie nom, prénom, téléphone et adresse
- */
 @ExtendWith(MockitoExtension.class)
 class UtilisateurServiceTest {
 
-    @Mock
-    private UtilisateurRepository utilisateurRepository;
+    @Mock private UtilisateurRepository utilisateurRepo;
+    @Mock private RoleRepository        roleRepo;
+    @Mock private PasswordEncoder       passwordEncoder;
+    @Mock private ApplicationContext    applicationContext;
 
-    @Mock
-    private RoleRepository roleRepository;
-
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @InjectMocks
-    private UtilisateurService utilisateurService;
-
-    private Utilisateur utilisateur;
-    private Role roleClient;
+    private UtilisateurService service;
+    private Utilisateur        utilisateur;
 
     @BeforeEach
     void setUp() {
-        utilisateur = new Utilisateur("Dupont", "Jean", "jean.dupont@email.com", "motdepasse123");
-        roleClient = new Role("ROLE_CLIENT");
-        roleClient.setId(1L);
+        service = new UtilisateurService(
+                utilisateurRepo, roleRepo, passwordEncoder, applicationContext);
+
+        lenient().when(applicationContext.getBean(UtilisateurService.class))
+                 .thenReturn(service);
+
+        utilisateur = new Utilisateur("Dupont", "Jean", "jean@test.com", "pass");
+        utilisateur.setId(1L);
+        utilisateur.setActif(true);
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // R1 – Inscription valide : compte créé avec rôle ROLE_CLIENT
-    // ─────────────────────────────────────────────────────────────────────────
+    // R1 – inscrire crée un utilisateur avec mot de passe encodé et rôle CLIENT
     @Test
-    void R1_inscriptionValide_compteCreéAvecRoleClient() {
-        when(utilisateurRepository.existsByEmail(utilisateur.getEmail())).thenReturn(false);
-        when(roleRepository.findByNom("ROLE_CLIENT")).thenReturn(Optional.of(roleClient));
-        when(passwordEncoder.encode(anyString())).thenReturn("$2a$encoded");
-        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(inv -> inv.getArgument(0));
+    @DisplayName("R1 - inscrire encode le mot de passe et assigne ROLE_CLIENT")
+    void R1_inscrire_encodeMotDePasseEtAssigneRole() {
+        Utilisateur nouveau = new Utilisateur("Martin", "Alice", "alice@test.com", "secret");
 
-        Utilisateur result = utilisateurService.inscrire(utilisateur);
+        when(utilisateurRepo.existsByEmail("alice@test.com")).thenReturn(false);
+        when(passwordEncoder.encode("secret")).thenReturn("{bcrypt}encoded");
+        Role roleClient = new Role("ROLE_CLIENT");
+        when(roleRepo.findByNom("ROLE_CLIENT")).thenReturn(Optional.of(roleClient));
+        when(utilisateurRepo.save(any())).thenReturn(nouveau);
+
+        Utilisateur result = service.inscrire(nouveau);
+
+        assertThat(result.getMotDePasse()).isEqualTo("{bcrypt}encoded");
+        assertThat(result.isActif()).isTrue();
+        assertThat(result.getRoles()).contains(roleClient);
+        verify(utilisateurRepo).save(nouveau);
+    }
+
+    // R2 – inscrire lève une exception si email déjà utilisé
+    @Test
+    @DisplayName("R2 - inscrire leve IllegalArgumentException si email existant")
+    void R2_inscrire_emailExistant_leveException() {
+        Utilisateur nouveau = new Utilisateur("Dupont", "Jean", "jean@test.com", "pass");
+        when(utilisateurRepo.existsByEmail("jean@test.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> service.inscrire(nouveau))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Email deja utilise");
+    }
+
+    // R3 – trouverParId retourne l'utilisateur existant
+    @Test
+    @DisplayName("R3 - trouverParId retourne l utilisateur existant")
+    void R3_trouverParId_retourneUtilisateur() {
+        when(utilisateurRepo.findById(1L)).thenReturn(Optional.of(utilisateur));
+
+        Utilisateur result = service.trouverParId(1L);
+
+        assertThat(result).isEqualTo(utilisateur);
+    }
+
+    // R4 – trouverParId lève ResourceNotFoundException si absent
+    @Test
+    @DisplayName("R4 - trouverParId leve ResourceNotFoundException si absent")
+    void R4_trouverParId_absent_leveException() {
+        when(utilisateurRepo.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.trouverParId(99L))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // R5 – trouverParEmail retourne l'utilisateur si trouvé
+    @Test
+    @DisplayName("R5 - trouverParEmail retourne l utilisateur si trouve")
+    void R5_trouverParEmail_retourneUtilisateur() {
+        when(utilisateurRepo.findByEmail("jean@test.com")).thenReturn(Optional.of(utilisateur));
+
+        Utilisateur result = service.trouverParEmail("jean@test.com");
+
+        assertThat(result).isEqualTo(utilisateur);
+    }
+
+    // R6 – trouverParEmail lève RuntimeException si absent
+    @Test
+    @DisplayName("R6 - trouverParEmail leve RuntimeException si absent")
+    void R6_trouverParEmail_absent_leveException() {
+        when(utilisateurRepo.findByEmail("inconnu@test.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.trouverParEmail("inconnu@test.com"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("introuvable");
+    }
+
+    // R7 – trouverParEmailOptional retourne Optional présent
+    @Test
+    @DisplayName("R7 - trouverParEmailOptional retourne Optional present")
+    void R7_trouverParEmailOptional_present() {
+        when(utilisateurRepo.findByEmail("jean@test.com")).thenReturn(Optional.of(utilisateur));
+
+        Optional<Utilisateur> result = service.trouverParEmailOptional("jean@test.com");
+
+        assertThat(result).isPresent().contains(utilisateur);
+    }
+
+    // R8 – trouverParEmailOptional retourne Optional vide si absent
+    @Test
+    @DisplayName("R8 - trouverParEmailOptional retourne Optional vide si absent")
+    void R8_trouverParEmailOptional_absent() {
+        when(utilisateurRepo.findByEmail("inconnu@test.com")).thenReturn(Optional.empty());
+
+        Optional<Utilisateur> result = service.trouverParEmailOptional("inconnu@test.com");
+
+        assertThat(result).isEmpty();
+    }
+
+    // R9 – mettreAJourProfil met à jour nom, prénom, téléphone, adresse
+    @Test
+    @DisplayName("R9 - mettreAJourProfil met a jour les champs de profil")
+    void R9_mettreAJourProfil_metAJourChamps() {
+        when(utilisateurRepo.findById(1L)).thenReturn(Optional.of(utilisateur));
+        when(utilisateurRepo.save(any())).thenReturn(utilisateur);
+
+        Utilisateur result = service.mettreAJourProfil(
+                1L, "Martin", "Pierre", "0600000000", "1 Rue de la Paix");
+
+        assertThat(result.getNom()).isEqualTo("Martin");
+        assertThat(result.getPrenom()).isEqualTo("Pierre");
+        assertThat(result.getTelephone()).isEqualTo("0600000000");
+        assertThat(result.getAdresse()).isEqualTo("1 Rue de la Paix");
+        verify(utilisateurRepo).save(utilisateur);
+    }
+
+    // R10 – inscrire sans rôle trouvé dans la base — aucune exception levée
+    @Test
+    @DisplayName("R10 - inscrire sans role ROLE_CLIENT en base n leve pas d exception")
+    void R10_inscrire_sansRoleEnBase_pasException() {
+        Utilisateur nouveau = new Utilisateur("X", "Y", "xy@test.com", "pass");
+        when(utilisateurRepo.existsByEmail("xy@test.com")).thenReturn(false);
+        when(passwordEncoder.encode("pass")).thenReturn("{bcrypt}xyz");
+        when(roleRepo.findByNom("ROLE_CLIENT")).thenReturn(Optional.empty());
+        when(utilisateurRepo.save(any())).thenReturn(nouveau);
+
+        Utilisateur result = service.inscrire(nouveau);
 
         assertThat(result).isNotNull();
-        assertThat(result.getRoles()).extracting(Role::getNom).contains("ROLE_CLIENT");
-        verify(utilisateurRepository).save(utilisateur);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // R2 – Email déjà utilisé : lève une exception
-    // ─────────────────────────────────────────────────────────────────────────
-    @Test
-    void R2_emailDejaUtilise_leveException() {
-        when(utilisateurRepository.existsByEmail(utilisateur.getEmail())).thenReturn(true);
-
-        assertThatThrownBy(() -> utilisateurService.inscrire(utilisateur))
-                .isInstanceOf(RuntimeException.class)
-                .hasMessageContaining("email");
-
-        verify(utilisateurRepository, never()).save(any());
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // R3 – Mot de passe encodé à l'enregistrement
-    // ─────────────────────────────────────────────────────────────────────────
-    @Test
-    void R3_motDePasseEncodeLorsInscription() {
-        when(utilisateurRepository.existsByEmail(utilisateur.getEmail())).thenReturn(false);
-        when(roleRepository.findByNom("ROLE_CLIENT")).thenReturn(Optional.of(roleClient));
-        when(passwordEncoder.encode("motdepasse123")).thenReturn("$2a$encoded_password");
-        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Utilisateur result = utilisateurService.inscrire(utilisateur);
-
-        assertThat(result.getMotDePasse()).isEqualTo("$2a$encoded_password");
-        verify(passwordEncoder).encode("motdepasse123");
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // R4 – Compte actif par défaut après inscription
-    // ─────────────────────────────────────────────────────────────────────────
-    @Test
-    void R4_compteActifParDefautApresInscription() {
-        when(utilisateurRepository.existsByEmail(utilisateur.getEmail())).thenReturn(false);
-        when(roleRepository.findByNom("ROLE_CLIENT")).thenReturn(Optional.of(roleClient));
-        when(passwordEncoder.encode(anyString())).thenReturn("$2a$encoded");
-        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        Utilisateur result = utilisateurService.inscrire(utilisateur);
-
-        assertThat(result.isActif()).isTrue();
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // R5 – trouverParEmail lève exception si email introuvable
-    // ─────────────────────────────────────────────────────────────────────────
-    @Test
-    void R5_trouverParEmail_leveExceptionSiIntrouvable() {
-        when(utilisateurRepository.findByEmail("inconnu@email.com")).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> utilisateurService.trouverParEmail("inconnu@email.com"))
-                .isInstanceOf(RuntimeException.class);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────────
-    // R6 – mettreAJourProfil modifie nom, prénom, téléphone et adresse
-    // ─────────────────────────────────────────────────────────────────────────
-    @Test
-    void R6_mettreAJourProfil_modifieLesChampsCorrectement() {
-        utilisateur.setId(1L);
-        when(utilisateurRepository.findById(1L)).thenReturn(Optional.of(utilisateur));
-        when(utilisateurRepository.save(any(Utilisateur.class))).thenAnswer(inv -> inv.getArgument(0));
-
-        utilisateurService.mettreAJourProfil(1L, "Martin", "Sophie", "0612345678", "12 rue de Paris");
-
-        assertThat(utilisateur.getNom()).isEqualTo("Martin");
-        assertThat(utilisateur.getPrenom()).isEqualTo("Sophie");
-        assertThat(utilisateur.getTelephone()).isEqualTo("0612345678");
-        assertThat(utilisateur.getAdresse()).isEqualTo("12 rue de Paris");
-        verify(utilisateurRepository).save(utilisateur);
+        assertThat(result.getRoles()).isEmpty();
     }
 }

@@ -197,13 +197,13 @@ class AdminControllerIT extends BaseIT {
     @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN", "CLIENT"})
     void R12_adminChangerEtatCommande_redirect() throws Exception {
         // Étape 1 : créer un produit pour avoir quelque chose à ajouter au panier
-        mockMvc.perform(post("/admin/produits/nouveau")
-                        .with(csrf())
-                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                        .param("nom", "Produit Pour Commande R12")
-                        .param("prix", "50.00")
-                        .param("stock", "10"))
-                .andExpect(status().is3xxRedirection());
+    	mockMvc.perform(post("/admin/produits/nouveau")
+    	        .with(csrf())
+    	        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+    	        .param("nom", "Produit A Supprimer")
+    	        .param("prix", "10.00")
+    	        .param("stock", "5"))
+    	    .andExpect(status().is3xxRedirection());
 
         // Étape 2 : récupérer l'ID du produit créé
         var listResult = mockMvc.perform(get("/admin/produits")).andReturn();
@@ -234,5 +234,48 @@ class AdminControllerIT extends BaseIT {
                         .param("etat", "EN_COURS"))
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/admin/commandes"));
+    }
+ // ─── COUVERTURE DES CONDITIONS MANQUANTES ────────────────────────────────
+
+    @Test
+    @DisplayName("R_COV1 - POST /admin/produits/nouveau sans categorieId couvre la branche null")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void RCOV1_creerProduitSansCategorie_brancheNull() throws Exception {
+        mockMvc.perform(post("/admin/produits/nouveau")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("nom", "Produit Sans Categorie")
+                        .param("prix", "19.99")
+                        .param("stock", "5"))
+                // pas de param "categorieId" → branche null couverte ✅
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/produits"));
+    }
+
+    @Test
+    @DisplayName("R_COV2 - POST /admin/produits/nouveau avec categorieId invalide couvre la branche catch")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void RCOV2_creerProduitAvecCategorieInvalide_brancheCatch() throws Exception {
+        mockMvc.perform(post("/admin/produits/nouveau")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("nom", "Produit Categorie Invalide")
+                        .param("prix", "29.99")
+                        .param("stock", "3")
+                        .param("categorieId", "99999"))  // ID inexistant → ResourceNotFoundException
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/produits"));
+    }
+
+    @Test
+    @DisplayName("R_COV3 - POST /admin/categories/nouveau avec nom vide ne crée pas de categorie")
+    @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})
+    void RCOV3_creerCategorieNomVide_brancheNomBlank() throws Exception {
+        mockMvc.perform(post("/admin/categories/nouveau")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("nom", "   "))  
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/admin/categories"));
     }
 }

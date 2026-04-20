@@ -24,12 +24,13 @@ class CommandeControllerIT extends BaseIT {
     @Autowired MockMvc mockMvc;
 
     // R1 – GET /commande/historique sans auth → redirect /login
+    // CORRECTION : Spring Security génère une URL absolue → utiliser redirectedUrlPattern
     @Test
     @DisplayName("R1 - GET /commande/historique sans auth redirige vers /login")
     void R1_historiqueSansAuth_redirectLogin() throws Exception {
         mockMvc.perform(get("/commande/historique"))
                 .andExpect(status().is3xxRedirection())
-                .andExpect(redirectedUrl("/login"));
+                .andExpect(redirectedUrlPattern("**/login"));
     }
 
     // R2 – GET /commande/historique avec CLIENT → 200
@@ -57,11 +58,10 @@ class CommandeControllerIT extends BaseIT {
     }
 
     // R4 – Flux complet : ajouter produit → valider panier → commande créée
+    // produitId=1 = Smartphone Samsung (ID stable grâce au reset dans test-data.sql)
     @Test
     @DisplayName("R4 - Flux complet : ajout produit + validation panier cree une commande")
     void R4_fluxComplet_ajoutEtValidation_creerCommande() throws Exception {
-        // Étape 1 : ajouter un produit au panier
-        // produitId=1 = Smartphone Samsung (dans data.sql de test)
         mockMvc.perform(post("/panier/ajouter")
                         .with(user("jean.dupont@email.com").roles("CLIENT"))
                         .with(csrf())
@@ -69,7 +69,6 @@ class CommandeControllerIT extends BaseIT {
                         .param("quantite", "1"))
                 .andExpect(status().is3xxRedirection());
 
-        // Étape 2 : valider le panier → doit créer une commande et rediriger
         mockMvc.perform(post("/panier/valider")
                         .with(user("jean.dupont@email.com").roles("CLIENT"))
                         .with(csrf())
@@ -80,13 +79,9 @@ class CommandeControllerIT extends BaseIT {
     }
 
     // R5 – GET /commande/{id} avec CLIENT → 200
-    // CORRECTION : le test original avait un "if" sans assertion de sécurité.
-    // Si redirectUrl était null, le test passait sans rien vérifier !
-    // Ajout de assertNotNull + assertTrue avant d'utiliser l'URL.
     @Test
     @DisplayName("R5 - GET /commande/{id} retourne 200 et vue detail")
     void R5_detailCommande_retourne200() throws Exception {
-        // Étape 1 : créer une commande via le flux
         mockMvc.perform(post("/panier/ajouter")
                         .with(user("jean.dupont@email.com").roles("CLIENT"))
                         .with(csrf())
@@ -99,14 +94,11 @@ class CommandeControllerIT extends BaseIT {
                         .param("adresse", "12 Rue Test"))
                 .andReturn();
 
-        // CORRECTION : on vérifie que la redirection existe vraiment
-        // avant de l'utiliser — sinon le test passait sans rien vérifier !
         String redirectUrl = result.getResponse().getRedirectedUrl();
         assertNotNull(redirectUrl, "La commande doit creer une redirection vers /commande/{id}");
         assertTrue(redirectUrl.startsWith("/commande/"),
                 "L URL doit commencer par /commande/ mais était : " + redirectUrl);
 
-        // Étape 2 : accéder au détail de la commande créée
         mockMvc.perform(get(redirectUrl)
                         .with(user("jean.dupont@email.com").roles("CLIENT")))
                 .andExpect(status().isOk())

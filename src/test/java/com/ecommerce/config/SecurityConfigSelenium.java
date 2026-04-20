@@ -19,10 +19,14 @@ import org.springframework.security.web.SecurityFilterChain;
  * Cette config ne définit AUCUN UserDetailsService → Spring utilise celui
  * de production (qui lit la base H2) → login fonctionne avec les vrais users.
  *
- * Elle est chargée via @Import dans EcommerceSystemTest (pas @Primary).
+ * IMPORTANT : le log "Using generated security password" indique que
+ * UserDetailsServiceAutoConfiguration s'active. Pour l'éviter, on exclut
+ * cette auto-config dans EcommerceSystemTest via @SpringBootTest(properties=...).
+ *
+ * Elle est activée uniquement via @ActiveProfiles("selenium").
  */
 @TestConfiguration
-@Profile("selenium")           // ← AJOUTER
+@Profile("selenium")
 public class SecurityConfigSelenium {
 
     @Bean("seleniumSecurityFilterChain")
@@ -30,8 +34,12 @@ public class SecurityConfigSelenium {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/login", "/inscription", "/catalogue", "/produit/**", "/", "/css/**", "/js/**").permitAll()
+                .requestMatchers(
+                    "/login", "/inscription", "/catalogue", "/produit/**",
+                    "/", "/css/**", "/js/**", "/images/**"
+                ).permitAll()
                 .requestMatchers("/admin/**").hasRole("ADMIN")
+                .requestMatchers("/panier/**", "/commande/**", "/profil/**").hasRole("CLIENT")
                 .anyRequest().authenticated()
             )
             .formLogin(form -> form

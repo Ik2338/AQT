@@ -53,7 +53,7 @@ public class Panier {
                 })
                 .sum();
     }
-    
+
 
     // Retourne le nombre total d'articles dans le panier
     public int getNombreArticles() {

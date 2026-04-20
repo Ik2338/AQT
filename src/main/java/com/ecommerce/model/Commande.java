@@ -26,7 +26,7 @@ public class Commande {
     public enum EtatCommande {
         EN_COURS,
         VALIDEE,
-        ANNULEE
+        ANNULEE, EXPEDIEE
     }
 
     @Id

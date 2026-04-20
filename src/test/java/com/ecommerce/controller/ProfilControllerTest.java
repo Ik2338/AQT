@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.model;
@@ -43,7 +44,6 @@ class ProfilControllerTest {
 
     private Utilisateur client;
     private MockHttpSession sessionAuthentifiee;
-
     private static final String EMAIL = "jean.dupont@email.com";
 
     @BeforeEach
@@ -67,7 +67,6 @@ class ProfilControllerTest {
             HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, ctx);
     }
 
-    // R1 – Profil affiché pour CLIENT connecté
     @Test
     @DisplayName("R1 - Profil affiche pour CLIENT connecte")
     void R1_profil_afficheClient() throws Exception {
@@ -77,9 +76,6 @@ class ProfilControllerTest {
            .andExpect(model().attributeExists("utilisateur"));
     }
 
-    // R2 – Profil refuse accès non connecté
-    // CORRECTION : redirectedUrlPattern("**/login") car Spring Security génère
-    // une URL absolue (http://localhost/login) — redirectedUrl("/login") échoue
     @Test
     @DisplayName("R2 - Profil refuse acces non connecte")
     void R2_profil_refuseNonConnecte() throws Exception {
@@ -88,7 +84,10 @@ class ProfilControllerTest {
            .andExpect(redirectedUrlPattern("**/login"));
     }
 
-    // R3 – Modifier profil redirige vers /profil
+    // CORRECTION R3 : .with(csrf()) ajouté.
+    // CSRF est actif dans SecurityConfigTest (nécessaire pour que les templates
+    // Thymeleaf avec ${_csrf.parameterName} ne crashent pas).
+    // Sans .with(csrf()), Spring Security rejette le POST avec 403 Forbidden.
     @Test
     @DisplayName("R3 - Modifier profil redirige vers profil")
     void R3_modifierProfil_redirige() throws Exception {
@@ -97,6 +96,7 @@ class ProfilControllerTest {
 
         mvc.perform(post("/profil/modifier")
                 .session(sessionAuthentifiee)
+                .with(csrf())
                 .param("nom", "Martin")
                 .param("prenom", "Sophie")
                 .param("telephone", "0699999999")
@@ -105,7 +105,7 @@ class ProfilControllerTest {
            .andExpect(redirectedUrl("/profil"));
     }
 
-    // R4 – Service appelé avec les bons paramètres
+    // CORRECTION R4 : même raison que R3
     @Test
     @DisplayName("R4 - Modifier profil appelle le service avec les bons parametres")
     void R4_modifierProfil_appelleService() throws Exception {
@@ -114,6 +114,7 @@ class ProfilControllerTest {
 
         mvc.perform(post("/profil/modifier")
                 .session(sessionAuthentifiee)
+                .with(csrf())
                 .param("nom", "Martin")
                 .param("prenom", "Sophie")
                 .param("telephone", "0699999999")
@@ -124,7 +125,6 @@ class ProfilControllerTest {
             1L, "Martin", "Sophie", "0699999999", "5 avenue Victor Hugo");
     }
 
-    // R5 – Modèle contient l'utilisateur
     @Test
     @DisplayName("R5 - Modele contient l utilisateur connecte")
     void R5_profil_modeleContientUtilisateur() throws Exception {

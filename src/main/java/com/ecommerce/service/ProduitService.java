@@ -2,6 +2,7 @@ package com.ecommerce.service;
 
 import java.util.List;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,61 +14,65 @@ import com.ecommerce.repository.ProduitRepository;
 @Transactional
 public class ProduitService {
 
-    private final ProduitRepository repo;
+    private final ProduitRepository  repo;
 
-    // Injection du repository via constructeur
-    public ProduitService(ProduitRepository repo) {
-        this.repo = repo;
+    /**
+     * ApplicationContext utilisé pour obtenir le proxy Spring de ce service
+     * et éviter la self-invocation sur les méthodes @Transactional(readOnly=true).
+     */
+    private final ApplicationContext applicationContext;
+
+    public ProduitService(ProduitRepository repo, ApplicationContext applicationContext) {
+        this.repo               = repo;
+        this.applicationContext = applicationContext;
     }
 
-    // Recherche filtrée par nom et/ou catégorie, parmi les produits actifs
+    /** Retourne le proxy Spring de ce service (évite la self-invocation). */
+    private ProduitService self() {
+        return applicationContext.getBean(ProduitService.class);
+    }
+
+    // ─── Recherche ───────────────────────────────────────────────────────────
+
     @Transactional(readOnly = true)
     public List<Produit> rechercher(String nom, Long categorieId) {
-
         if (nom != null && !nom.isBlank() && categorieId != null) {
-			return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
-		}
+            return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
+        }
         if (nom != null && !nom.isBlank()) {
-			return repo.findByNomContainingIgnoreCaseAndActifTrue(nom);
-		}
+            return repo.findByNomContainingIgnoreCaseAndActifTrue(nom);
+        }
         if (categorieId != null) {
-			return repo.findByCategorieIdAndActifTrue(categorieId);
-		}
-        // Aucun filtre : retourne tous les produits actifs
-        if (nom != null && !nom.isBlank() && categorieId != null) {
-			return repo.findByNomContainingIgnoreCaseAndCategorieIdAndActifTrue(nom, categorieId);
-		}
-        if (nom != null && !nom.isBlank()) {
-			return repo.findByNomContainingIgnoreCaseAndActifTrue(nom);
-		}
-        if (categorieId != null) {
-			return repo.findByCategorieIdAndActifTrue(categorieId);
-		}
+            return repo.findByCategorieIdAndActifTrue(categorieId);
+        }
         return repo.findByActifTrue();
     }
 
-    // Retourne tous les produits actifs
     @Transactional(readOnly = true)
     public List<Produit> listerTous() {
         return repo.findByActifTrue();
     }
 
-    // Recherche un produit par ID, lève une exception si introuvable
     @Transactional(readOnly = true)
     public Produit trouverParId(Long id) {
         return repo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produit", id));
     }
 
-    // Crée un nouveau produit et le marque comme actif
+    // ─── Écriture ────────────────────────────────────────────────────────────
+
     public Produit creer(Produit p) {
         p.setActif(true);
         return repo.save(p);
     }
 
-    // Met à jour les informations d'un produit existant
+    /**
+     * Met à jour tous les champs d'un produit existant.
+     * Utilise self() pour appeler trouverParId via le proxy Spring
+     * et garantir l'interception @Transactional(readOnly=true).
+     */
     public Produit modifier(Long id, Produit data) {
-        Produit p = trouverParId(id);
+        Produit p = self().trouverParId(id);
         p.setNom(data.getNom());
         p.setDescription(data.getDescription());
         p.setPrix(data.getPrix());
@@ -77,16 +82,22 @@ public class ProduitService {
         return repo.save(p);
     }
 
-    // Suppression logique : désactive le produit sans le supprimer de la base
+    /**
+     * Suppression douce (soft delete) : désactive le produit.
+     * Utilise self() pour éviter la self-invocation.
+     */
     public void supprimer(Long id) {
-        Produit p = trouverParId(id);
+        Produit p = self().trouverParId(id);
         p.setActif(false);
         repo.save(p);
     }
 
-    // Met à jour uniquement le stock d'un produit
+    /**
+     * Met à jour uniquement le stock d'un produit.
+     * Utilise self() pour éviter la self-invocation.
+     */
     public void mettreAJourStock(Long id, int stock) {
-        Produit p = trouverParId(id);
+        Produit p = self().trouverParId(id);
         p.setStock(stock);
         repo.save(p);
     }

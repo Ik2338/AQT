@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.context.ApplicationContext;
 
 import com.ecommerce.exception.StockInsuffisantException;
 import com.ecommerce.model.Commande;
@@ -28,6 +29,7 @@ class CommandeServiceTest {
     private CommandeRepository commandeRepo;
     private ProduitRepository  produitRepo;
     private CommandeService    commandeService;
+    private ApplicationContext applicationContext;
 
     private Utilisateur client;
     private Produit     produit;
@@ -35,15 +37,20 @@ class CommandeServiceTest {
 
     @BeforeEach
     void setUp() {
-        commandeRepo  = mock(CommandeRepository.class);
-        produitRepo   = mock(ProduitRepository.class);
+        commandeRepo       = mock(CommandeRepository.class);
+        produitRepo        = mock(ProduitRepository.class);
+        applicationContext = mock(ApplicationContext.class);
 
         PanierService panierService = new PanierService(null, null) {
             @Override
-            public void vider(Utilisateur utilisateur) { /* ne rien faire */ }
+            public void vider(Utilisateur utilisateur) { /* no-op */ }
         };
 
-        commandeService = new CommandeService(commandeRepo, produitRepo, panierService);
+        commandeService = new CommandeService(
+                commandeRepo, produitRepo, panierService, applicationContext);
+
+        // Le proxy self() doit retourner le service lui-même pour les tests unitaires
+        when(applicationContext.getBean(CommandeService.class)).thenReturn(commandeService);
 
         client = new Utilisateur();
         client.setNom("Dupont");
@@ -68,9 +75,7 @@ class CommandeServiceTest {
         panier.getLignes().add(ligne);
     }
 
-    // ─────────────────────────────────────────────────────────
     // R1 – panier vide lève une exception
-    // ─────────────────────────────────────────────────────────
     @Test
     @DisplayName("R1 - panier vide leve une exception")
     void R1_panierVide_leveException() {
@@ -83,10 +88,7 @@ class CommandeServiceTest {
         assertEquals("Le panier est vide.", ex.getMessage());
     }
 
-    // ─────────────────────────────────────────────────────────
     // R2 – quantité > stock lève StockInsuffisantException
-    // CORRECTION : était nommé R2 deux fois — renommé correctement
-    // ─────────────────────────────────────────────────────────
     @Test
     @DisplayName("R2 - quantite superieure au stock leve StockInsuffisantException")
     void R2_quantiteDepasseStock_leveException() {
@@ -103,17 +105,14 @@ class CommandeServiceTest {
         LignePanier ligne = new LignePanier();
         ligne.setPanier(panierTest);
         ligne.setProduit(p);
-        ligne.setQuantite(5); // 5 demandés mais stock = 1
+        ligne.setQuantite(5);
         panierTest.getLignes().add(ligne);
 
         assertThrows(StockInsuffisantException.class,
                 () -> commandeService.validerPanier(client, panierTest, "Adresse test"));
     }
 
-    // ─────────────────────────────────────────────────────────
     // R3 – quantité OK → commande créée avec état VALIDEE
-    // CORRECTION : était le 2ème "R2" dans l'original
-    // ─────────────────────────────────────────────────────────
     @Test
     @DisplayName("R3 - quantite ok, commande creee avec etat VALIDEE")
     void R3_quantiteOk_commandeCreee_etatVALIDEE() {
@@ -125,10 +124,7 @@ class CommandeServiceTest {
         assertEquals(EtatCommande.VALIDEE, result.getEtat());
     }
 
-    // ─────────────────────────────────────────────────────────
     // R4 – commande créée contient l'adresse de livraison
-    // CORRECTION : ce test manquait complètement dans l'original
-    // ─────────────────────────────────────────────────────────
     @Test
     @DisplayName("R4 - commande creee contient l adresse de livraison")
     void R4_commandeCreee_contientAdresseLivraison() {
@@ -140,9 +136,7 @@ class CommandeServiceTest {
         assertEquals("12 Rue de la Paix", result.getAdresseLivraison());
     }
 
-    // ─────────────────────────────────────────────────────────
     // R5 – validation commande décrémente le stock
-    // ─────────────────────────────────────────────────────────
     @Test
     @DisplayName("R5 - validation commande decremente le stock du produit")
     void R5_validationCommande_decrementeStock() {
@@ -151,7 +145,23 @@ class CommandeServiceTest {
 
         commandeService.validerPanier(client, panier, "12 Rue test");
 
-        assertEquals(stockInitial - 2, produit.getStock()); // 10 - 2 = 8
+        assertEquals(stockInitial - 2, produit.getStock()); // 8
         verify(produitRepo, times(1)).save(produit);
+    }
+
+    // R6 – changerEtat met à jour l'état via le proxy self()
+    @Test
+    @DisplayName("R6 - changerEtat met a jour l etat de la commande")
+    void R6_changerEtat_metAJourEtat() {
+        when(commandeRepo.save(any())).thenAnswer(i -> i.getArgument(0));
+        Commande commande = new Commande(client);
+        commande.setId(1L);
+        commande.setEtat(EtatCommande.VALIDEE);
+        when(commandeRepo.findById(1L)).thenReturn(java.util.Optional.of(commande));
+
+        Commande result = commandeService.changerEtat(1L, EtatCommande.EXPEDIEE);
+
+        assertEquals(EtatCommande.EXPEDIEE, result.getEtat());
+        verify(commandeRepo).save(commande);
     }
 }
