@@ -27,7 +27,7 @@ public class SecurityConfig {
 
     private static final String URL_CATALOGUE = "/catalogue";
     private static final String URL_LOGIN     = "/login";
-    private static final String URL_ADMIN     = "/admin/dashboard";
+    private static final String URL_ADMIN     = "/admin";
 
     // H2 console — UNIQUEMENT activée en développement (spring.h2.console.enabled=false en prod).
     // L'exclusion CSRF sur ce chemin est intentionnelle et sûre car :

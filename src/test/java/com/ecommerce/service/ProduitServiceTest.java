@@ -46,14 +46,14 @@ class ProduitServiceTest {
 
     // R1 – listerTous retourne les produits actifs
     @Test
-    @DisplayName("R1 - listerTous retourne les produits actifs")
-    void R1_listerTous_retourneProduitsActifs() {
-        when(repo.findByActifTrue()).thenReturn(List.of(produit));
+    @DisplayName("R1 - listerTous retourne tous les produits (admin)")
+    void R1_listerTous_retourneTousProduits() {
+        when(repo.findAll()).thenReturn(List.of(produit));
 
         List<Produit> result = service.listerTous();
 
         assertThat(result).hasSize(1).contains(produit);
-        verify(repo).findByActifTrue();
+        verify(repo).findAll(); // ✅ corrigé
     }
 
     // R2 – trouverParId retourne le produit existant

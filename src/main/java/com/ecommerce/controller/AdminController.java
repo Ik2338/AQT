@@ -25,25 +25,25 @@ public class AdminController {
 
     private static final Logger log = LoggerFactory.getLogger(AdminController.class);
 
-    // ─── Constantes pour éviter la duplication de littéraux ─────────────────
-    private static final String REDIRECT_PRODUITS        = "redirect:/admin/produits";
-    private static final String REDIRECT_CATEGORIES      = "redirect:/admin/categories";
-    private static final String REDIRECT_COMMANDES        = "redirect:/admin/commandes";
-    private static final String ATTR_SUCCESS              = "success";
-    private static final String MODEL_CATEGORIES          = "categories";
-    private static final String MODEL_NOUVELLE_CATEGORIE  = "nouvelleCategorie";
+    private static final String REDIRECT_PRODUITS       = "redirect:/admin/produits";
+    private static final String REDIRECT_CATEGORIES     = "redirect:/admin/categories";
+    private static final String REDIRECT_COMMANDES      = "redirect:/admin/commandes";
+    private static final String ATTR_SUCCESS            = "success";
+    private static final String MODEL_CATEGORIES        = "categories";
+    private static final String MODEL_NOUVELLE_CATEGORIE = "nouvelleCategorie";
 
-    private final ProduitService produitService;
-    private final CommandeService commandeService;
+    private final ProduitService   produitService;
+    private final CommandeService  commandeService;
     private final CategorieService categorieService;
 
     public AdminController(ProduitService p, CommandeService c, CategorieService cs) {
-        this.produitService = p;
-        this.commandeService = c;
+        this.produitService   = p;
+        this.commandeService  = c;
         this.categorieService = cs;
     }
 
-    // Tableau de bord : affiche les statistiques globales
+    // ─── DASHBOARD ──────────────────────────────────────────────────────────
+
     @GetMapping({"", "/"})
     public String dashboard(Model model) {
         model.addAttribute("nbProduits",   produitService.listerTous().size());
@@ -56,7 +56,7 @@ public class AdminController {
 
     @GetMapping("/produits")
     public String produits(Model model) {
-        model.addAttribute("produits", produitService.listerTous());
+        model.addAttribute("produits", produitService.listerTous()); // actifs + inactifs
         return "admin/produits/liste";
     }
 
@@ -127,6 +127,16 @@ public class AdminController {
         return REDIRECT_PRODUITS;
     }
 
+    // ✅ NOUVEAU : Toggle actif / inactif
+    @PostMapping("/produits/toggle/{id}")
+    public String toggleActif(@PathVariable Long id, RedirectAttributes ra) {
+        boolean nouvelEtat = produitService.toggleActif(id);
+        ra.addFlashAttribute(ATTR_SUCCESS,
+            nouvelEtat ? "✅ Produit activé avec succès."
+                       : "⛔ Produit désactivé avec succès.");
+        return REDIRECT_PRODUITS;
+    }
+
     @PostMapping("/produits/supprimer/{id}")
     public String supprimerProduit(@PathVariable Long id, RedirectAttributes ra) {
         produitService.supprimer(id);
@@ -148,8 +158,8 @@ public class AdminController {
 
     @GetMapping("/categories")
     public String categories(Model model) {
-        model.addAttribute(MODEL_CATEGORIES,         categorieService.listerToutes());
-        model.addAttribute(MODEL_NOUVELLE_CATEGORIE, new Categorie());
+        model.addAttribute(MODEL_CATEGORIES,          categorieService.listerToutes());
+        model.addAttribute(MODEL_NOUVELLE_CATEGORIE,  new Categorie());
         return "admin/categories";
     }
 
@@ -190,15 +200,8 @@ public class AdminController {
 
     // ─── MÉTHODES PRIVÉES ───────────────────────────────────────────────────
 
-    /**
-     * Associe une catégorie à un produit par son ID.
-     * Si la catégorie est introuvable, le produit reste sans catégorie
-     * et un avertissement est loggé.
-     */
     private void assignerCategorie(Produit p, Long categorieId) {
-        if (categorieId == null) {
-            return;
-        }
+        if (categorieId == null) return;
         try {
             p.setCategorie(categorieService.trouverParId(categorieId));
         } catch (ResourceNotFoundException _) {

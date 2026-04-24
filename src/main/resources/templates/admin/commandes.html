@@ -1,14 +1,20 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8"><title>Commandes — Admin ShopElite</title>
+  <meta charset="UTF-8">
+  <title>Commandes — Admin ShopElite</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
+
 <body>
+
 <nav class="navbar">
-  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <a class="navbar-brand" th:href="@{/admin}">Shop<span>Elite</span> Admin</a>
   <div class="navbar-nav">
-    <a th:href="@{/admin}" class="nav-link" style="color:var(--bordeaux)">⚙ Admin</a>
+    <a th:href="@{/admin}" class="nav-link">Dashboard</a>
+    <a th:href="@{/admin/produits}" class="nav-link">Produits</a>
+    <a th:href="@{/admin/categories}" class="nav-link">Catégories</a>
+    <a th:href="@{/admin/commandes}" class="nav-link active">Commandes</a>
     <form th:action="@{/logout}" method="post" style="display:inline">
       <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
     </form>
@@ -16,23 +22,29 @@
 </nav>
 
 <div class="container">
+
+  <!-- Message succès -->
   <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
   <div class="page-header">
     <h1 class="page-title">Gestion des <span>Commandes</span></h1>
   </div>
 
+  <!-- Menu admin -->
   <div class="admin-nav">
     <a th:href="@{/admin}">Dashboard</a>
-    <a th:href="@{/admin/produits}"> Produits</a>
-    <a th:href="@{/admin/categories}"> Catégories</a>
-    <a th:href="@{/admin/commandes}" class="active">Commandes</a>
+    <a th:href="@{/admin/produits}">📦 Produits</a>
+    <a th:href="@{/admin/categories}">🗂 Catégories</a>
+    <a th:href="@{/admin/commandes}" class="active">📋 Commandes</a>
   </div>
 
+  <!-- Aucun résultat -->
   <div th:if="${commandes.empty}" class="empty-state">
     <div class="icon">📋</div>
     <h3>Aucune commande</h3>
   </div>
 
+  <!-- Tableau -->
   <div class="table-container" th:unless="${commandes.empty}">
     <table>
       <thead>
@@ -46,44 +58,64 @@
           <th>Changer état</th>
         </tr>
       </thead>
+
       <tbody>
         <tr th:each="cmd : ${commandes}">
-          <td><strong th:text="'#' + cmd.id"></strong></td>
+
+          <!-- ID -->
           <td>
-            <span th:if="${cmd.client != null}" th:text="${cmd.client.prenom + ' ' + cmd.client.nom}"></span>
-            <span th:unless="${cmd.client != null}" style="color: var(--gris);">Client supprimé</span>
+            <strong th:text="'#' + ${cmd.id}"></strong>
           </td>
-          <td th:text="${#temporals.format(cmd.dateCommande,'dd/MM/yyyy HH:mm')}"></td>
-          <td th:text="${cmd.lignes.size()} + ' article(s)'"></td>
+
+          <!-- CLIENT (SAFE) -->
+          <td th:text="${cmd.client != null ? cmd.client.prenom + ' ' + cmd.client.nom : 'Client inconnu'}"></td>
+
+          <!-- DATE (SAFE) -->
+          <td th:text="${cmd.dateCommande != null ? #temporals.format(cmd.dateCommande,'dd/MM/yyyy HH:mm') : '-'}"></td>
+
+          <!-- LIGNES (SAFE) -->
+          <td th:text="${cmd.lignes != null ? cmd.lignes.size() : 0} + ' article(s)'"></td>
+
+          <!-- TOTAL -->
           <td style="color:var(--or);font-weight:700"
-              th:text="${#numbers.formatDecimal(cmd.montantTotal,1,'COMMA',2,'POINT')} + ' €'"></td>
-          <td>
-            <span th:class="${cmd.etat.name() == 'VALIDEE' ? 'badge badge-validee'
-                           : (cmd.etat.name() == 'ANNULEE' ? 'badge badge-annulee'
-                           : 'badge badge-en-cours')}"
-                  th:text="${cmd.etat}"></span>
+              th:text="${cmd.montantTotal != null ? #numbers.formatDecimal(cmd.montantTotal,1,'COMMA',2,'POINT') : '0.00'} + ' €'">
           </td>
+
+          <!-- ETAT -->
           <td>
-            <form th:action="@{/admin/commandes/{id}/etat(id=${cmd.id})}" method="post"
+            <span th:class="${cmd.etat.name() == 'VALIDEE' ? 'badge badge-validee' : (cmd.etat.name() == 'ANNULEE' ? 'badge badge-annulee' : 'badge badge-en-cours')}"
+                  th:text="${cmd.etat}">
+            </span>
+          </td>
+
+          <!-- CHANGER ETAT -->
+          <td>
+            <form th:action="@{/admin/commandes/{id}/etat(id=${cmd.id})}"
+                  method="post"
                   style="display:flex;gap:0.5rem">
-              <!-- CORRECTION : CSRF avec th:if -->
-              <input type="hidden" th:if="${_csrf != null}" 
-                     th:name="${_csrf.parameterName}" 
-                     th:value="${_csrf.token}"/>
-              <select name="etat" class="form-control"
-                      style="padding:0.4rem 0.7rem;font-size:0.85rem">
-                <option th:each="e : ${etats}" th:value="${e}" th:text="${e}"
-                        th:selected="${cmd.etat == e}"></option>
+
+              <select name="etat" class="form-control" style="padding:0.4rem 0.7rem;font-size:0.85rem">
+                <option th:each="e : ${etats}"
+                        th:value="${e}"
+                        th:text="${e}"
+                        th:selected="${cmd.etat == e}">
+                </option>
               </select>
+
               <button type="submit" class="btn btn-primary btn-sm">✓</button>
             </form>
           </td>
+
         </tr>
       </tbody>
     </table>
   </div>
+
 </div>
 
-<footer><span>ShopElite</span> — Projet AQL 2025/2026 · Pr. S. CHANTIT</footer>
+<footer>
+  <span>ShopElite</span> — Projet AQL 2025/2026 · Pr. S. CHANTIT
+</footer>
+
 </body>
 </html>

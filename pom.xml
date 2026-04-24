@@ -46,6 +46,11 @@
     <version>5.7.0</version>
     <scope>test</scope>
 </dependency>
+    	<dependency>
+    		<groupId>ma.fstm.ilisi.projets</groupId>
+    		<artifactId>OrderManagement</artifactId>
+    		<version>0.0.1-SNAPSHOT</version>
+    	</dependency>
     </dependencies>
     <build>
         <plugins>

@@ -44,7 +44,7 @@ public class Produit {
 
     // Chemin relatif vers l'image (ex: "/images/produits/smartphone.jpg")
     // Si null, Thymeleaf affiche l'image par défaut
-    @Column(name = "image_url")
+    @Column(name = "image_url", length = 1000)
     private String imageUrl;
 
     // Catégorie du produit, optionnelle

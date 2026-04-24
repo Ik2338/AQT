@@ -6,9 +6,12 @@
 </head>
 <body>
 <nav class="navbar">
-  <a class="navbar-brand" th:href="@{/}">Shop<span>Elite</span></a>
+  <a class="navbar-brand" th:href="@{/admin}">Shop<span>Elite</span> Admin</a>
   <div class="navbar-nav">
-    <a th:href="@{/admin}" class="nav-link" style="color:var(--bordeaux)">⚙ Admin</a>
+    <a th:href="@{/admin}" class="nav-link">Dashboard</a>
+    <a th:href="@{/admin/produits}" class="nav-link">Produits</a>
+    <a th:href="@{/admin/categories}" class="nav-link">Catégories</a>
+    <a th:href="@{/admin/commandes}" class="nav-link">Commandes</a>
     <form th:action="@{/logout}" method="post" style="display:inline">
       <button type="submit" class="btn btn-secondary btn-sm">Déconnexion</button>
     </form>
@@ -17,19 +20,15 @@
 
 <div class="container">
   <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
-  <div class="page-header">
-    <h1 class="page-title">Tableau de <span>Bord</span></h1>
-  </div>
+  <div class="page-header"><h1 class="page-title">Tableau de <span>Bord</span></h1></div>
 
-  <!-- Navigation admin — même style que catégories -->
   <div class="admin-nav">
     <a th:href="@{/admin}" class="active">Dashboard</a>
-    <a th:href="@{/admin/produits}"> Produits</a>
-    <a th:href="@{/admin/categories}"> Catégories</a>
-    <a th:href="@{/admin/commandes}">Commandes</a>
+    <a th:href="@{/admin/produits}">📦 Produits</a>
+    <a th:href="@{/admin/categories}">🗂 Catégories</a>
+    <a th:href="@{/admin/commandes}">📋 Commandes</a>
   </div>
 
-  <!-- Stats -->
   <div class="stats-grid">
     <div class="stat-card">
       <div class="stat-number" th:text="${nbProduits}">0</div>
@@ -45,7 +44,6 @@
     </div>
   </div>
 
-  <!-- Actions rapides -->
   <div class="card">
     <h3 style="font-family:var(--font-title);margin-bottom:1.2rem;color:var(--blanc)">Actions rapides</h3>
     <div style="display:flex;gap:1rem;flex-wrap:wrap">
@@ -56,6 +54,6 @@
   </div>
 </div>
 
-<footer><span>ShopElite</span> — Projet AQL 2025/2026</footer>
+<footer><span>ShopElite</span> — Projet AQL 2025/2026 · Pr. S. CHANTIT</footer>
 </body>
 </html>

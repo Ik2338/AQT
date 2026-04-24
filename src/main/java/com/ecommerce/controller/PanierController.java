@@ -135,4 +135,5 @@ public class PanierController {
             return REDIRECT_CHECKOUT;
         }
     }
+    
 }

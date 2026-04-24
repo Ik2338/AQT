@@ -1,11 +1,9 @@
 package com.ecommerce.service;
 
 import java.util.List;
-
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.ecommerce.exception.ResourceNotFoundException;
 import com.ecommerce.model.Produit;
 import com.ecommerce.repository.ProduitRepository;
@@ -14,12 +12,7 @@ import com.ecommerce.repository.ProduitRepository;
 @Transactional
 public class ProduitService {
 
-    private final ProduitRepository  repo;
-
-    /**
-     * ApplicationContext utilisé pour obtenir le proxy Spring de ce service
-     * et éviter la self-invocation sur les méthodes @Transactional(readOnly=true).
-     */
+    private final ProduitRepository repo;
     private final ApplicationContext applicationContext;
 
     public ProduitService(ProduitRepository repo, ApplicationContext applicationContext) {
@@ -27,7 +20,6 @@ public class ProduitService {
         this.applicationContext = applicationContext;
     }
 
-    /** Retourne le proxy Spring de ce service (évite la self-invocation). */
     private ProduitService self() {
         return applicationContext.getBean(ProduitService.class);
     }
@@ -50,7 +42,7 @@ public class ProduitService {
 
     @Transactional(readOnly = true)
     public List<Produit> listerTous() {
-        return repo.findByActifTrue();
+        return repo.findAll(); // ✅ retourne actifs ET inactifs pour l'admin
     }
 
     @Transactional(readOnly = true)
@@ -66,11 +58,6 @@ public class ProduitService {
         return repo.save(p);
     }
 
-    /**
-     * Met à jour tous les champs d'un produit existant.
-     * Utilise self() pour appeler trouverParId via le proxy Spring
-     * et garantir l'interception @Transactional(readOnly=true).
-     */
     public Produit modifier(Long id, Produit data) {
         Produit p = self().trouverParId(id);
         p.setNom(data.getNom());
@@ -84,7 +71,6 @@ public class ProduitService {
 
     /**
      * Suppression douce (soft delete) : désactive le produit.
-     * Utilise self() pour éviter la self-invocation.
      */
     public void supprimer(Long id) {
         Produit p = self().trouverParId(id);
@@ -93,9 +79,16 @@ public class ProduitService {
     }
 
     /**
-     * Met à jour uniquement le stock d'un produit.
-     * Utilise self() pour éviter la self-invocation.
+     * ✅ Toggle actif/inactif : inverse l'état du produit.
+     * Retourne le nouvel état (true = actif, false = inactif).
      */
+    public boolean toggleActif(Long id) {
+        Produit p = self().trouverParId(id);
+        p.setActif(!p.isActif());
+        repo.save(p);
+        return p.isActif();
+    }
+
     public void mettreAJourStock(Long id, int stock) {
         Produit p = self().trouverParId(id);
         p.setStock(stock);

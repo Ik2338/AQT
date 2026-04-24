@@ -29,9 +29,12 @@ import com.ecommerce.config.SecurityConfigTest;
 import com.ecommerce.model.Categorie;
 import com.ecommerce.model.Commande;
 import com.ecommerce.model.Produit;
+import com.ecommerce.model.Utilisateur;
 import com.ecommerce.service.CategorieService;
 import com.ecommerce.service.CommandeService;
 import com.ecommerce.service.ProduitService;
+
+import bo.Client;
 
 @WebMvcTest(AdminController.class)
 @Import(SecurityConfigTest.class)
@@ -59,8 +62,14 @@ class AdminControllerTest {
         commande = new Commande();
         commande.setId(1L);
         commande.setEtat(Commande.EtatCommande.EN_COURS);
-    }
 
+        // ✅ AJOUT IMPORTANT (corrige ton erreur)
+        Utilisateur client = new Utilisateur();
+        client.setPrenom("Test");
+        client.setNom("User");
+
+        commande.setClient(client);
+    }
     @Test
     @DisplayName("R1 - Dashboard accessible")
     @WithMockUser(username = "admin@ecommerce.com", roles = {"ADMIN"})

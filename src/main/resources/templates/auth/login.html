@@ -1,36 +1,63 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connexion — ShopElite</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connexion — BeautyElite</title>
   <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <div class="auth-page">
-  <div class="auth-card">
-    <div class="auth-logo">Shop<span style="color:var(--blanc)">Elite</span></div>
-    <div class="auth-subtitle">Connectez-vous à votre compte</div>
 
-    <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
-    <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+  <!-- VISUAL SIDE -->
+  <div class="auth-visual">
+    <div class="auth-visual-brand">
+      ShopElite
+      <span>Votre univers de luxe</span>
+    </div>
+    <div class="auth-visual-quote">
+      « La beauté commence au moment où vous décidez d'être vous-même. »
+      <br><br>
+      <small style="color:rgba(255,255,255,0.4);font-style:normal;font-size:0.8rem;letter-spacing:2px">— COCO CHANEL</small>
+    </div>
 
-    
-    <form th:action="@{/login}" method="post">
-      <div class="form-group">
-        <label class="form-label">Adresse email</label>
-        <input type="email" name="username" class="form-control" required placeholder="votre@email.com"/>
+    <!-- Decorative circles -->
+    <div style="position:absolute;width:300px;height:300px;border-radius:50%;border:1px solid rgba(212,175,111,0.15);top:10%;right:-80px;pointer-events:none"></div>
+    <div style="position:absolute;width:200px;height:200px;border-radius:50%;border:1px solid rgba(201,123,138,0.15);bottom:15%;left:-50px;pointer-events:none"></div>
+  </div>
+
+  <!-- FORM SIDE -->
+  <div class="auth-form-side">
+    <div class="auth-card">
+      <div class="auth-logo">Beauty<span>Elite</span></div>
+      <div class="auth-subtitle">Bienvenue — Connectez-vous à votre compte</div>
+
+      <div th:if="${error}" class="alert alert-error" th:text="${error}"></div>
+      <div th:if="${success}" class="alert alert-success" th:text="${success}"></div>
+
+      <form th:action="@{/login}" method="post">
+        <div class="form-group">
+          <label class="form-label">Adresse email</label>
+          <input type="email" name="username" class="form-control" required placeholder="votre@email.com" autocomplete="email"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" name="password" class="form-control" required placeholder="••••••••" autocomplete="current-password"/>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:0.5rem">
+          Se connecter
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Pas encore inscrite ? <a th:href="@{/inscription}">Créer un compte gratuit</a>
       </div>
-      <div class="form-group">
-        <label class="form-label">Mot de passe</label>
-        <input type="password" name="password" class="form-control" required placeholder="••••••••"/>
-      </div>
-      <button type="submit" class="btn btn-primary btn-block btn-lg">Se connecter</button>
-    </form>
 
-    <div class="auth-footer">
-      Pas encore de compte ? <a th:href="@{/inscription}">Créer un compte</a>
+      <!-- Admin hint -->
+      
     </div>
   </div>
+
 </div>
 </body>
 </html>
